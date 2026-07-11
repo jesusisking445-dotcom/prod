@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Services — HomoDentHealth</title>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="nav-logo"><img src="images/logo.png" alt="HomoDentHealth" class="nav-logo-img" /></a>
+    <div class="nav-links"><a href="index.html">Home</a><a href="about.html">About</a><a href="services.html">Services</a><a href="clinics.html">Find Clinics</a><a href="blog.html">Health Blog</a><a href="videos.html">Videos</a><a href="contact.html">Contact</a></div>
+    <div class="nav-actions"><a href="auth.html" class="btn btn-secondary btn-sm">Login</a><a href="auth.html" class="btn btn-primary btn-sm">Register</a></div>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html">Home</a><a href="about.html">About</a><a href="services.html">Services</a><a href="clinics.html">Find Clinics</a><a href="blog.html">Health Blog</a><a href="videos.html">Videos</a><a href="contact.html">Contact</a>
+    <div class="m-actions"><a href="auth.html" class="btn btn-secondary btn-sm">Login</a><a href="auth.html" class="btn btn-primary btn-sm">Register</a></div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="breadcrumb"><a href="index.html">Home</a> › Services</div>
+  <h1>Our Services</h1>
+  <p>Comprehensive AI-assisted dental screening, triage, education, and referral — all in one platform.</p>
+</div>
+
+<!-- Core Services -->
+<section style="background:white;">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Core Services</div>
+      <h2>Everything from screening to referral</h2>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:32px;">
+
+      <div class="card" style="display:grid;grid-template-columns:80px 1fr;gap:24px;align-items:flex-start;">
+        <div style="width:80px;height:80px;background:var(--light-teal);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;flex-shrink:0;">🦷</div>
+        <div>
+          <h3>Tooth Pain Assessment</h3>
+          <p style="margin-top:8px;">Our structured symptom questionnaire evaluates the nature, location, duration, and severity of tooth pain. Using clinical decision logic, the system identifies possible causes such as dental caries, pulpitis, or cracked tooth syndrome, and assigns an urgency level for care.</p>
+          <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+            <span class="badge badge-teal">Free</span><span class="badge badge-teal">No registration needed</span><span class="badge badge-teal">~3 minutes</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="display:grid;grid-template-columns:80px 1fr;gap:24px;align-items:flex-start;">
+        <div style="width:80px;height:80px;background:#FFF0F0;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;flex-shrink:0;">🩸</div>
+        <div>
+          <h3>Gum Disease Screening</h3>
+          <p style="margin-top:8px;">Detects early signs of gingivitis and periodontal disease by assessing bleeding patterns, gum swelling, pain on probing, and tooth mobility. Early detection significantly improves treatment outcomes and prevents tooth loss.</p>
+          <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+            <span class="badge badge-teal">Preventive focus</span><span class="badge badge-teal">Early detection</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="display:grid;grid-template-columns:80px 1fr;gap:24px;align-items:flex-start;">
+        <div style="width:80px;height:80px;background:#FCE4E8;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;flex-shrink:0;">🚨</div>
+        <div>
+          <h3>Emergency Dental Screening</h3>
+          <p style="margin-top:8px;">Our dedicated emergency detection module screens for life-threatening conditions including dental abscess with systemic spread, Ludwig's angina, severe dental trauma, and uncontrolled haemorrhage. Patients flagged as emergencies are immediately directed to appropriate care.</p>
+          <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+            <span class="badge badge-severe">Critical feature</span><span class="badge badge-teal">24/7 available</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="display:grid;grid-template-columns:80px 1fr;gap:24px;align-items:flex-start;">
+        <div style="width:80px;height:80px;background:#EFF8F8;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;flex-shrink:0;">📍</div>
+        <div>
+          <h3>Clinic Referral & Location Services</h3>
+          <p style="margin-top:8px;">After triage, patients are directed to the most suitable nearby dental facility based on their location, urgency level, and required specialty. The system shows distance, opening hours, emergency availability, and allows direct appointment booking.</p>
+          <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+            <span class="badge badge-teal">120+ partner clinics</span><span class="badge badge-teal">Real-time availability</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="display:grid;grid-template-columns:80px 1fr;gap:24px;align-items:flex-start;">
+        <div style="width:80px;height:80px;background:#F0FDF4;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;flex-shrink:0;">🪥</div>
+        <div>
+          <h3>Oral Hygiene Advice And Oral Health Advice</h3>
+          <p style="margin-top:8px;">Personalised oral hygiene recommendations tailored to each patient's assessed condition. Covers brushing technique, flossing, diet modification, Take self cleansing fruit e.g Water melon, Cucumber, Brush gently and from the gum line, so as to massage the gingiva, for free flow of blood around the gum and management of sensitivity — all evidence-based and appropriate for the Nigerian context.</p>
+          <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+            <span class="badge badge-teal">Personalised</span><span class="badge badge-teal">Evidence-based</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="display:grid;grid-template-columns:80px 1fr;gap:24px;align-items:flex-start;">
+        <div style="width:80px;height:80px;background:#FEF3C7;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;flex-shrink:0;">📅</div>
+        <div>
+          <h3>Appointment Booking System</h3>
+          <p style="margin-top:8px;">Patients can book dental appointments directly with partner clinics through the platform, with automatic email and SMS reminders. Dentists and clinic admins can manage bookings through the professional portal.</p>
+          <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+            <span class="badge badge-teal">SMS/Email reminders</span><span class="badge badge-teal">Cancel/reschedule</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Services for Professionals -->
+<section style="background:var(--bg);">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">For Dental Professionals</div>
+      <h2>Designed for dentists and therapists too</h2>
+      <p>HomoDentHealth isn't just for patients. We provide a comprehensive professional portal for dental teams.</p>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-icon">🩺</div>
+        <h4>Case Review Dashboard</h4>
+        <p>Review pre-screened patient cases before appointments. View symptom history, triage level, and patient notes to maximise consultation efficiency.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📝</div>
+        <h4>Patient Records Management</h4>
+        <p>Securely access and update patient records, add clinical notes, and track treatment progress through a HIPAA-conscious records interface.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔗</div>
+        <h4>Referral Management</h4>
+        <p>Approve or modify referrals generated by the triage engine. Set up specialist referral pathways and manage inter-clinic transfers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Urgency Classification -->
+<section style="background:white;">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Triage Classification</div>
+      <h2>How we classify urgency</h2>
+    </div>
+    <div class="grid-4">
+      <div style="background:#D1FAE5;border-radius:var(--radius-lg);padding:24px;border:1px solid #A7F3D0;">
+        <div style="font-size:2rem;margin-bottom:12px;">✅</div>
+        <h4 style="color:#065F46;">Mild</h4>
+        <p style="color:#064E3B;font-size:0.85rem;margin-top:8px;">Minor concern. Home care advice. Routine dental check within 2–4 weeks.</p>
+      </div>
+      <div style="background:#FEF3C7;border-radius:var(--radius-lg);padding:24px;border:1px solid #FDE68A;">
+        <div style="font-size:2rem;margin-bottom:12px;">🔶</div>
+        <h4 style="color:#92400E;">Moderate</h4>
+        <p style="color:#78350F;font-size:0.85rem;margin-top:8px;">Likely infection or decay. Book a dental appointment within 1–2 weeks.</p>
+      </div>
+      <div style="background:#FEE2E2;border-radius:var(--radius-lg);padding:24px;border:1px solid #FECACA;">
+        <div style="font-size:2rem;margin-bottom:12px;">⚠️</div>
+        <h4 style="color:#991B1B;">Urgent</h4>
+        <p style="color:#7F1D1D;font-size:0.85rem;margin-top:8px;">Probable abscess or trauma. See a dental professional within 24 hours.</p>
+      </div>
+      <div style="background:#FCE4E8;border-radius:var(--radius-lg);padding:24px;border:1px solid #F9A8B4;">
+        <div style="font-size:2rem;margin-bottom:12px;">🚨</div>
+        <h4 style="color:#A51C30;">Emergency</h4>
+        <p style="color:#7B1A26;font-size:0.85rem;margin-top:8px;">Life-threatening. Go to ER or call 112 immediately.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="background:linear-gradient(135deg,var(--primary),var(--primary-light));">
+  <div class="container text-center">
+    <h2 style="color:white;margin-bottom:14px;">Experience the services today</h2>
+    <p style="color:rgba(255,255,255,0.8);max-width:480px;margin:0 auto 28px;">Start your free dental symptom assessment — no registration required.</p>
+    <a href="assessment.html" class="btn-hero-primary">Start Symptom Check →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-disclaimer"><strong>Medical Disclaimer:</strong> Services provided by HomoDentHealth are for screening and educational purposes only and do not constitute professional dental care.</div>
+    <div class="footer-grid">
+      <div class="footer-brand"><div class="footer-logo"><img src="images/logo.png" alt="HomoDentHealth" style="height:28px;object-fit:contain;" /></div><p>Nigeria's AI-assisted dental screening and referral platform.</p></div>
+      <div class="footer-col"><h4>Platform</h4><ul><li><a href="assessment.html">Symptom Checker</a></li><li><a href="clinics.html">Find Clinics</a></li><li><a href="appointment.html">Book Appointment</a></li></ul></div>
+      <div class="footer-col"><h4>Company</h4><ul><li><a href="about.html">About Us</a></li><li><a href="services.html">Services</a></li><li><a href="blog.html">Health Blog</a><a href="videos.html">Videos</a></li></ul></div>
+      <div class="footer-col"><h4>Contact</h4><ul><li><a href="contact.html">Get in Touch</a></li><li><a href="privacy.html">Privacy Policy</a></li></ul></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 HomoDentHealth.</span></div>
+  </div>
+</footer>
+<script src="config.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

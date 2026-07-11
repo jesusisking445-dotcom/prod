@@ -1,0 +1,11 @@
+.env
+node_modules/
+logs/
+.DS_Store
+*.log
+*.swp
+.vscode/settings.json
+dist/
+build/
+.idea/
+.env

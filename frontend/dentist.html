@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dentist Portal — HomoDentHealth</title>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  body { background: var(--bg); }
+  .dash-view { display: none; }
+  .dash-view.active { display: block; animation: fadeInUp 0.35s ease; }
+  .sidebar-nav a { cursor: pointer; }
+  .sidebar-user { display: flex; align-items: center; gap: 10px; padding: 14px; background: var(--light-teal); border-radius: var(--radius); margin-bottom: 16px; }
+  .case-item { padding: 16px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; }
+  .case-item .row1 { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .case-notes { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .case-notes.open { display: block; }
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+  .empty-state .icon { font-size: 2.6rem; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="nav-logo"><img src="images/logo.png" alt="HomoDentHealth" class="nav-logo-img" /></a>
+    <div class="nav-links">
+      <span class="badge badge-teal" style="font-size:0.78rem;">🦷 Dentist Portal</span>
+    </div>
+    <div class="nav-actions">
+      <span id="dash-user-name" style="font-size:0.85rem;color:var(--text-muted);"></span>
+      <a href="#" id="btn-logout" class="btn btn-secondary btn-sm">Logout</a>
+    </div>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="#" id="btn-logout-mobile" class="btn btn-secondary btn-sm">Logout</a>
+  </div>
+</nav>
+
+<div class="layout-sidebar">
+  <aside class="sidebar">
+    <div class="sidebar-user">
+      <div class="author-avatar" style="background:var(--primary);color:white;" id="dash-avatar">?</div>
+      <div>
+        <div style="font-weight:700;font-size:0.85rem;" id="dash-fullname">—</div>
+        <div style="font-size:0.75rem;color:var(--text-muted);">Dentist</div>
+      </div>
+    </div>
+    <div class="sidebar-section-label">Cases</div>
+    <nav class="sidebar-nav">
+      <a class="active" data-view="view-queue">📋 My Case Queue</a>
+      <a data-view="view-completed">✅ Completed</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+
+    <div class="dash-view active" id="view-queue">
+      <h2 class="mb-8">My Case Queue</h2>
+      <p class="mb-24">Patients booked with you (or routed to your clinic) who haven't been seen yet.</p>
+      <div class="grid-4" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:28px;">
+        <div class="stat-card"><div class="stat-num" id="stat-pending">—</div><div class="stat-label">Pending</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-today">—</div><div class="stat-label">Today</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-completed">—</div><div class="stat-label">Completed</div></div>
+      </div>
+      <div id="queue-list"><p>Loading…</p></div>
+    </div>
+
+    <div class="dash-view" id="view-completed">
+      <h2 class="mb-24">Completed Cases</h2>
+      <div id="completed-list"><p>Loading…</p></div>
+    </div>
+
+  </main>
+</div>
+
+<script src="config.js"></script>
+<script src="main.js"></script>
+<script>
+const user = requireAuth(['dentist']);
+
+document.getElementById('btn-logout').addEventListener('click', e => { e.preventDefault(); logout(); });
+document.getElementById('btn-logout-mobile').addEventListener('click', e => { e.preventDefault(); logout(); });
+
+document.querySelectorAll('.sidebar-nav a[data-view]').forEach(link => {
+  link.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar-nav a[data-view]').forEach(a => a.classList.remove('active'));
+    link.classList.add('active');
+    document.querySelectorAll('.dash-view').forEach(v => v.classList.remove('active'));
+    document.getElementById(link.dataset.view).classList.add('active');
+  });
+});
+
+const STATUS_BADGE = { pending: 'badge-moderate', confirmed: 'badge-teal', in_progress: 'badge-teal', completed: 'badge-mild', cancelled: 'badge-severe', no_show: 'badge-severe' };
+
+function fmtDate(d) { return new Date(d).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }); }
+function isToday(d) {
+  const a = new Date(d), b = new Date();
+  return a.toDateString() === b.toDateString();
+}
+function patientLabel(a) {
+  if (a.user) return `${a.user.firstName || ''} ${a.user.lastName || ''}`.trim() || a.user.email;
+  return a.contactName || 'Guest patient';
+}
+function patientContact(a) {
+  return a.user ? (a.user.phone || a.user.email) : (a.contactPhone || a.contactEmail || '');
+}
+
+let allCases = [];
+
+async function loadQueue() {
+  try {
+    const res = await apiFetch('/api/appointment/dentist/queue');
+    allCases = res.appointments || [];
+
+    const upcoming = allCases.filter(a => ['pending','confirmed','in_progress'].includes(a.status));
+    const completed = allCases.filter(a => a.status === 'completed');
+    const today = upcoming.filter(a => isToday(a.appointmentDate));
+
+    document.getElementById('stat-pending').textContent = upcoming.length;
+    document.getElementById('stat-today').textContent = today.length;
+    document.getElementById('stat-completed').textContent = completed.length;
+
+    renderQueue(upcoming);
+    renderCompleted(completed);
+  } catch (e) {
+    document.getElementById('queue-list').innerHTML = `<p>Could not load your case queue right now.</p>`;
+  }
+}
+
+function renderQueue(items) {
+  const el = document.getElementById('queue-list');
+  if (!items.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>No cases in your queue right now.</p></div>`;
+    return;
+  }
+  items.sort((a,b) => new Date(a.appointmentDate) - new Date(b.appointmentDate));
+  el.innerHTML = items.map(a => caseItemHtml(a, true)).join('');
+  wireCaseActions(el);
+}
+
+function renderCompleted(items) {
+  const el = document.getElementById('completed-list');
+  if (!items.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>No completed cases yet.</p></div>`;
+    return;
+  }
+  el.innerHTML = items.map(a => caseItemHtml(a, false)).join('');
+}
+
+function caseItemHtml(a, actionable) {
+  return `
+    <div class="case-item" id="case-${a._id}">
+      <div class="row1">
+        <div>
+          <div style="font-weight:700;">${patientLabel(a)}</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">${patientContact(a)} · ${fmtDate(a.appointmentDate)} ${a.timeSlot?.startTime || ''} · ${a.serviceType}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="badge ${STATUS_BADGE[a.status] || 'badge-teal'}">${a.status.replace('_',' ')}</span>
+          ${actionable ? `<button class="btn btn-secondary btn-sm" data-toggle-notes="${a._id}">Add Notes</button>` : ''}
+        </div>
+      </div>
+      ${a.notes ? `<div style="margin-top:10px;font-size:0.85rem;"><strong>Patient notes:</strong> ${a.notes}</div>` : ''}
+      ${a.consultationNotes ? `<div style="margin-top:6px;font-size:0.85rem;"><strong>Your notes:</strong> ${a.consultationNotes}</div>` : ''}
+      ${actionable ? `
+      <div class="case-notes" id="notes-${a._id}">
+        <div class="form-group"><label>Consultation Notes</label><textarea class="form-control" id="notes-input-${a._id}" rows="3">${a.consultationNotes || ''}</textarea></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" data-save-notes="${a._id}">Save Notes</button>
+          ${a.status !== 'in_progress' ? `<button class="btn btn-secondary btn-sm" data-status="${a._id}:in_progress">Mark In Progress</button>` : ''}
+          <button class="btn btn-secondary btn-sm" data-status="${a._id}:completed">Mark Completed</button>
+          <button class="btn btn-secondary btn-sm" data-status="${a._id}:no_show">Mark No-show</button>
+        </div>
+      </div>` : ''}
+    </div>
+  `;
+}
+
+function wireCaseActions(scope) {
+  scope.querySelectorAll('[data-toggle-notes]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('notes-' + btn.dataset.toggleNotes).classList.toggle('open');
+    });
+  });
+  scope.querySelectorAll('[data-save-notes]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.saveNotes;
+      const text = document.getElementById('notes-input-' + id).value;
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        await apiFetch(`/api/appointment/${id}/notes`, { method: 'PATCH', body: JSON.stringify({ consultationNotes: text }) });
+        loadQueue();
+      } catch (e) { alert(e.message); btn.disabled = false; btn.textContent = 'Save Notes'; }
+    });
+  });
+  scope.querySelectorAll('[data-status]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const [id, status] = btn.dataset.status.split(':');
+      try {
+        await apiFetch(`/api/appointment/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+        loadQueue();
+      } catch (e) { alert(e.message); }
+    });
+  });
+}
+
+if (user) {
+  document.getElementById('dash-user-name').textContent = user.fullName || user.email;
+  document.getElementById('dash-fullname').textContent = user.fullName || user.email;
+  document.getElementById('dash-avatar').textContent = (user.firstName || user.email || '?')[0].toUpperCase();
+  loadQueue();
+}
+</script>
+</body>
+</html>

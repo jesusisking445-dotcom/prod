@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Dashboard — HomoDentHealth</title>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  body { background: var(--bg); }
+  .dash-view { display: none; }
+  .dash-view.active { display: block; animation: fadeInUp 0.35s ease; }
+  .sidebar-nav a { cursor: pointer; }
+  .sidebar-user { display: flex; align-items: center; gap: 10px; padding: 14px; background: var(--light-teal); border-radius: var(--radius); margin-bottom: 16px; }
+  .history-item { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; flex-wrap: wrap; }
+  .history-item:hover { border-color: var(--secondary); }
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+  .empty-state .icon { font-size: 2.6rem; margin-bottom: 12px; }
+  /* Star rating */
+  .star-rating { display: flex; gap: 4px; }
+  .star-rating button { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #ddd; transition: color .15s; padding: 0; line-height:1; }
+  .star-rating button.active, .star-rating button:hover ~ button { color: #ddd; }
+  .star-rating:hover button, .star-rating button.active { color: #f59e0b; }
+  .star-rating button:hover ~ button { color: #ddd !important; }
+  /* Toggle switch */
+  .toggle-wrap { display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid var(--border); }
+  .toggle-wrap:last-child { border-bottom:none; }
+  .toggle-label { font-weight:600; font-size:.875rem; }
+  .toggle-label small { display:block; font-weight:400; color:var(--text-muted); font-size:.78rem; }
+  .toggle { position:relative; display:inline-block; width:44px; height:24px; }
+  .toggle input { opacity:0; width:0; height:0; }
+  .toggle-slider { position:absolute; inset:0; background:#ddd; border-radius:24px; cursor:pointer; transition:.3s; }
+  .toggle-slider:before { content:''; position:absolute; width:18px; height:18px; left:3px; bottom:3px; background:white; border-radius:50%; transition:.3s; }
+  input:checked + .toggle-slider { background:var(--primary); }
+  input:checked + .toggle-slider:before { transform:translateX(20px); }
+  /* Danger zone */
+  .danger-zone { border:1.5px solid #fca5a5; border-radius:var(--radius); padding:20px; margin-top:24px; background:#fff5f5; }
+  .danger-zone h4 { color:#dc2626; margin-bottom:8px; }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="nav-logo"><img src="images/logo.png" alt="HomoDentHealth" class="nav-logo-img"/></a>
+    <div class="nav-links"><span class="badge badge-teal" style="font-size:.78rem;">👤 My Dashboard</span></div>
+    <div class="nav-actions">
+      <span id="dash-user-name" style="font-size:.85rem;color:var(--text-muted);"></span>
+      <a href="#" id="btn-logout" class="btn btn-secondary btn-sm">Logout</a>
+    </div>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="#" id="btn-logout-mobile" class="btn btn-secondary btn-sm">Logout</a>
+  </div>
+</nav>
+
+<div class="layout-sidebar">
+  <aside class="sidebar">
+    <div class="sidebar-user">
+      <div class="author-avatar" style="background:var(--primary);color:white;" id="dash-avatar">?</div>
+      <div>
+        <div style="font-weight:700;font-size:.85rem;" id="dash-fullname">—</div>
+        <div style="font-size:.75rem;color:var(--text-muted);">Patient</div>
+      </div>
+    </div>
+    <div class="sidebar-section-label">Overview</div>
+    <nav class="sidebar-nav">
+      <a class="active" data-view="view-overview">📊 Overview</a>
+      <a data-view="view-assessments">🦷 My Assessments</a>
+      <a data-view="view-appointments">📅 My Appointments</a>
+      <a data-view="view-profile">⚙️ Profile Settings</a>
+      <a data-view="view-preferences">🔔 Notifications</a>
+    </nav>
+    <div class="sidebar-section-label">Quick Actions</div>
+    <nav class="sidebar-nav">
+      <a href="assessment.html" style="display:block;">🔍 New Symptom Check</a>
+      <a href="clinics.html" style="display:block;">🏥 Find Clinics</a>
+      <a href="appointment.html" style="display:block;">➕ Book Appointment</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- ── OVERVIEW ── -->
+    <div class="dash-view active" id="view-overview">
+      <h2 class="mb-8">Welcome back, <span id="overview-name">there</span> 👋</h2>
+      <p class="mb-24" style="color:var(--text-muted);">Here's a summary of your dental health activity.</p>
+      <div class="grid-4" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:28px;">
+        <div class="stat-card"><div class="stat-num" id="stat-assessments">—</div><div class="stat-label">Assessments</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-upcoming">—</div><div class="stat-label">Upcoming Appts</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-completed">—</div><div class="stat-label">Completed Visits</div></div>
+      </div>
+      <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:flex-start;">
+        <div class="card"><h4 class="mb-12">🦷 Latest Assessment</h4><div id="overview-latest-assessment"><p>No assessments yet.</p></div></div>
+        <div class="card"><h4 class="mb-12">📅 Next Appointment</h4><div id="overview-next-appointment"><p>No upcoming appointments.</p></div></div>
+      </div>
+    </div>
+
+    <!-- ── ASSESSMENTS ── -->
+    <div class="dash-view" id="view-assessments">
+      <h2 class="mb-8">My Assessments</h2>
+      <p class="mb-24">Your dental symptom check history.</p>
+      <div id="assessments-list"><p>Loading…</p></div>
+    </div>
+
+    <!-- ── APPOINTMENTS (Feature 1: rating stars added) ── -->
+    <div class="dash-view" id="view-appointments">
+      <h2 class="mb-8">My Appointments</h2>
+      <p class="mb-24">All your booked appointments.</p>
+      <div id="appointments-list"><p>Loading…</p></div>
+    </div>
+
+    <!-- ── PROFILE ── -->
+    <div class="dash-view" id="view-profile">
+      <h2 class="mb-24">Profile Settings</h2>
+      <div class="card" style="max-width:520px;">
+        <form id="profile-form">
+          <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="form-group"><label>First Name</label><input type="text" id="pf-firstname" class="form-control"/></div>
+            <div class="form-group"><label>Last Name</label><input type="text" id="pf-lastname" class="form-control"/></div>
+          </div>
+          <div class="form-group"><label>Email</label><input type="email" id="pf-email" class="form-control" disabled/></div>
+          <div class="form-group"><label>Phone</label><input type="tel" id="pf-phone" class="form-control"/></div>
+          <div class="form-group"><label>Date of Birth</label><input type="date" id="pf-dob" class="form-control"/></div>
+          <div id="profile-alert" class="auth-alert" style="margin-bottom:12px;"></div>
+          <button type="submit" class="btn btn-primary" id="btn-save-profile">Save Changes</button>
+        </form>
+      </div>
+
+      <!-- Feature 5: Account deletion -->
+      <div class="danger-zone">
+        <h4>⚠️ Danger Zone</h4>
+        <p style="font-size:.875rem;margin-bottom:12px;">Deleting your account is permanent and will remove all your data from HomoDentHealth. This cannot be undone.</p>
+        <button class="btn btn-sm" style="background:#dc2626;color:white;border-color:#dc2626;" id="btn-delete-account">Delete My Account</button>
+      </div>
+    </div>
+
+    <!-- ── NOTIFICATION PREFERENCES (Feature 6) ── -->
+    <div class="dash-view" id="view-preferences">
+      <h2 class="mb-8">Notification Preferences</h2>
+      <p class="mb-24">Choose how you'd like HomoDentHealth to reach you.</p>
+      <div class="card" style="max-width:480px;">
+        <div class="toggle-wrap">
+          <div class="toggle-label">
+            Email Notifications
+            <small>Appointment confirmations, reminders, and status updates</small>
+          </div>
+          <label class="toggle"><input type="checkbox" id="pref-email" checked/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-wrap">
+          <div class="toggle-label">
+            SMS Reminders
+            <small>Text message reminder the day before your appointment</small>
+          </div>
+          <label class="toggle"><input type="checkbox" id="pref-sms"/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-wrap">
+          <div class="toggle-label">
+            Newsletter
+            <small>Monthly dental health tips and platform updates</small>
+          </div>
+          <label class="toggle"><input type="checkbox" id="pref-newsletter"/><span class="toggle-slider"></span></label>
+        </div>
+        <div id="pref-alert" class="auth-alert" style="margin:14px 0 4px;"></div>
+        <button class="btn btn-primary mt-16" id="btn-save-prefs">Save Preferences</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Rating Modal (Feature 1) -->
+<div id="rating-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;">
+  <div class="card" style="max-width:400px;width:90%;padding:28px;">
+    <h3 class="mb-4">⭐ Rate Your Visit</h3>
+    <p id="rating-clinic-name" style="color:var(--text-muted);margin-bottom:16px;font-size:.875rem;"></p>
+    <div class="star-rating mb-16" id="star-rating-widget">
+      <button data-val="1">★</button><button data-val="2">★</button>
+      <button data-val="3">★</button><button data-val="4">★</button><button data-val="5">★</button>
+    </div>
+    <div class="form-group">
+      <label>Comments (optional)</label>
+      <textarea id="rating-review" class="form-control" rows="3" placeholder="How was your experience?"></textarea>
+    </div>
+    <div id="rating-alert" class="auth-alert" style="margin-bottom:12px;"></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" id="btn-submit-rating">Submit Rating</button>
+      <button class="btn btn-secondary" onclick="closeRatingModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="main.js"></script>
+<script>
+const user = requireAuth(['user']);
+
+document.getElementById('btn-logout').addEventListener('click', e => { e.preventDefault(); logout(); });
+document.getElementById('btn-logout-mobile').addEventListener('click', e => { e.preventDefault(); logout(); });
+
+// ── Sidebar tab switching ────────────────────────────────
+document.querySelectorAll('.sidebar-nav a[data-view]').forEach(link => {
+  link.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar-nav a[data-view]').forEach(a => a.classList.remove('active'));
+    link.classList.add('active');
+    document.querySelectorAll('.dash-view').forEach(v => v.classList.remove('active'));
+    document.getElementById(link.dataset.view).classList.add('active');
+  });
+});
+
+const LEVEL_BADGE = { emergency:'badge-emergency', severe:'badge-severe', moderate:'badge-moderate', mild:'badge-mild' };
+const STATUS_BADGE = { pending:'badge-moderate', confirmed:'badge-teal', in_progress:'badge-teal', completed:'badge-mild', cancelled:'badge-severe', no_show:'badge-severe' };
+
+function fmtDate(d) { return new Date(d).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }); }
+
+// ── Profile ──────────────────────────────────────────────
+async function loadProfile() {
+  if (user) {
+    document.getElementById('dash-user-name').textContent = user.fullName || user.firstName || user.email;
+    document.getElementById('dash-fullname').textContent = user.fullName || user.email;
+    document.getElementById('overview-name').textContent = user.firstName || 'there';
+    document.getElementById('dash-avatar').textContent = (user.firstName || user.email || '?')[0].toUpperCase();
+  }
+  try {
+    const res = await apiFetch('/api/user/profile');
+    const u = res.user;
+    Store.save('user', u);
+    document.getElementById('pf-firstname').value = u.firstName || '';
+    document.getElementById('pf-lastname').value = u.lastName || '';
+    document.getElementById('pf-email').value = u.email || '';
+    document.getElementById('pf-phone').value = u.phone || '';
+    document.getElementById('pf-dob').value = u.dateOfBirth ? u.dateOfBirth.slice(0,10) : '';
+    // Load current notification preferences (Feature 6)
+    document.getElementById('pref-email').checked = u.preferences?.emailNotifications !== false;
+    document.getElementById('pref-sms').checked = !!u.preferences?.smsNotifications;
+    document.getElementById('pref-newsletter').checked = !!u.preferences?.newsletter;
+  } catch (e) { /* keep cached */ }
+}
+
+document.getElementById('profile-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const alertEl = document.getElementById('profile-alert');
+  alertEl.className = 'auth-alert';
+  const btn = document.getElementById('btn-save-profile');
+  btn.disabled = true;
+  try {
+    const res = await apiFetch('/api/user/profile', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        firstName: document.getElementById('pf-firstname').value,
+        lastName: document.getElementById('pf-lastname').value,
+        phone: document.getElementById('pf-phone').value,
+        dateOfBirth: document.getElementById('pf-dob').value || undefined
+      })
+    });
+    Store.save('user', res.user);
+    alertEl.textContent = 'Profile updated successfully.';
+    alertEl.className = 'auth-alert show success';
+  } catch (err) {
+    alertEl.textContent = err.message || 'Could not save changes.';
+    alertEl.className = 'auth-alert show error';
+  } finally { btn.disabled = false; }
+});
+
+// ── Feature 6: Notification Preferences ──────────────────
+document.getElementById('btn-save-prefs').addEventListener('click', async () => {
+  const alertEl = document.getElementById('pref-alert');
+  alertEl.className = 'auth-alert';
+  try {
+    await apiFetch('/api/user/preferences', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        emailNotifications: document.getElementById('pref-email').checked,
+        smsNotifications: document.getElementById('pref-sms').checked,
+        newsletter: document.getElementById('pref-newsletter').checked
+      })
+    });
+    alertEl.textContent = 'Preferences saved.';
+    alertEl.className = 'auth-alert show success';
+  } catch (err) {
+    alertEl.textContent = err.message || 'Could not save preferences.';
+    alertEl.className = 'auth-alert show error';
+  }
+});
+
+// ── Feature 5: Account Deletion ──────────────────────────
+document.getElementById('btn-delete-account').addEventListener('click', async () => {
+  const confirmed = confirm('Are you absolutely sure you want to delete your account? This will permanently erase all your assessments and appointments and cannot be undone.');
+  if (!confirmed) return;
+  const reconfirmed = confirm('Last chance: your account will be permanently deleted. Continue?');
+  if (!reconfirmed) return;
+  try {
+    await apiFetch('/api/user/account', { method: 'DELETE' });
+    alert('Your account has been deleted. Thank you for using HomoDentHealth.');
+    logout();
+  } catch (err) {
+    alert('Could not delete account: ' + (err.message || 'Unknown error.'));
+  }
+});
+
+// ── Assessments ──────────────────────────────────────────
+async function loadAssessments() {
+  try {
+    const res = await apiFetch('/api/assessment/user/history');
+    const items = res.assessments || [];
+    document.getElementById('stat-assessments').textContent = items.length;
+    const listEl = document.getElementById('assessments-list');
+    const latestEl = document.getElementById('overview-latest-assessment');
+    if (!items.length) {
+      listEl.innerHTML = `<div class="empty-state"><div class="icon">🦷</div><p>No assessments yet.</p><a href="assessment.html" class="btn btn-primary btn-sm mt-12">Start a Symptom Check</a></div>`;
+      latestEl.innerHTML = `<p>No assessments yet. <a href="assessment.html" class="text-primary fw-600">Take one now</a>.</p>`;
+      return;
+    }
+    listEl.innerHTML = items.map(a => `
+      <div class="history-item">
+        <div>
+          <div style="font-weight:700;">${a.result?.condition || 'Assessment'}</div>
+          <div style="font-size:.8rem;color:var(--text-muted);">${fmtDate(a.createdAt)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="badge ${LEVEL_BADGE[a.result?.level] || 'badge-teal'}">${a.result?.levelLabel || a.result?.level || ''}</span>
+          <a href="appointment.html?referralId=${a._id}" class="btn btn-secondary btn-sm">Book Appointment</a>
+        </div>
+      </div>
+    `).join('');
+    const latest = items[0];
+    latestEl.innerHTML = `<div class="history-item" style="border:none;padding:0;">
+      <div><div style="font-weight:700;">${latest.result?.condition}</div><div style="font-size:.8rem;color:var(--text-muted);">${fmtDate(latest.createdAt)}</div></div>
+      <span class="badge ${LEVEL_BADGE[latest.result?.level] || 'badge-teal'}">${latest.result?.levelLabel || ''}</span>
+    </div>`;
+  } catch (e) {
+    document.getElementById('assessments-list').innerHTML = `<p>Could not load your assessments right now.</p>`;
+  }
+}
+
+// ── Appointments + Feature 1: Rating Stars ───────────────
+let pendingRateId = null;
+let ratingScore = 0;
+
+function openRatingModal(apptId, clinicName) {
+  pendingRateId = apptId;
+  ratingScore = 0;
+  document.getElementById('rating-clinic-name').textContent = clinicName || '';
+  document.getElementById('rating-review').value = '';
+  document.getElementById('rating-alert').className = 'auth-alert';
+  document.querySelectorAll('#star-rating-widget button').forEach(b => b.classList.remove('active'));
+  document.getElementById('rating-modal').style.display = 'flex';
+}
+window.closeRatingModal = function() {
+  document.getElementById('rating-modal').style.display = 'none';
+};
+
+// Star hover/click handling
+document.querySelectorAll('#star-rating-widget button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    ratingScore = parseInt(btn.dataset.val);
+    document.querySelectorAll('#star-rating-widget button').forEach((b, i) => {
+      b.classList.toggle('active', i < ratingScore);
+    });
+  });
+  btn.addEventListener('mouseenter', () => {
+    const val = parseInt(btn.dataset.val);
+    document.querySelectorAll('#star-rating-widget button').forEach((b, i) => {
+      b.style.color = i < val ? '#f59e0b' : '#ddd';
+    });
+  });
+  btn.addEventListener('mouseleave', () => {
+    document.querySelectorAll('#star-rating-widget button').forEach((b, i) => {
+      b.style.color = i < ratingScore ? '#f59e0b' : '#ddd';
+    });
+  });
+});
+
+document.getElementById('btn-submit-rating').addEventListener('click', async () => {
+  if (!ratingScore) { document.getElementById('rating-alert').textContent = 'Please select a star rating.'; document.getElementById('rating-alert').className = 'auth-alert show error'; return; }
+  try {
+    await apiFetch(`/api/appointment/${pendingRateId}/rate`, {
+      method: 'PATCH',
+      body: JSON.stringify({ score: ratingScore, review: document.getElementById('rating-review').value.trim() })
+    });
+    closeRatingModal();
+    loadAppointments();
+  } catch (err) {
+    document.getElementById('rating-alert').textContent = err.message || 'Could not submit rating.';
+    document.getElementById('rating-alert').className = 'auth-alert show error';
+  }
+});
+
+async function loadAppointments() {
+  try {
+    const res = await apiFetch('/api/appointment/my-appointments');
+    const items = res.appointments || [];
+    const upcoming = items.filter(a => ['pending','confirmed'].includes(a.status));
+    const completed = items.filter(a => a.status === 'completed');
+    document.getElementById('stat-upcoming').textContent = upcoming.length;
+    document.getElementById('stat-completed').textContent = completed.length;
+    const listEl = document.getElementById('appointments-list');
+    const nextEl = document.getElementById('overview-next-appointment');
+    if (!items.length) {
+      listEl.innerHTML = `<div class="empty-state"><div class="icon">📅</div><p>No appointments booked yet.</p><a href="appointment.html" class="btn btn-primary btn-sm mt-12">Book an Appointment</a></div>`;
+      nextEl.innerHTML = `<p>No upcoming appointments. <a href="appointment.html" class="text-primary fw-600">Book one now</a>.</p>`;
+      return;
+    }
+    listEl.innerHTML = items.map(a => {
+      const canRate = a.status === 'completed' && !a.rating?.score;
+      const alreadyRated = a.status === 'completed' && a.rating?.score;
+      return `<div class="history-item">
+        <div>
+          <div style="font-weight:700;">${a.clinic?.name || 'Clinic'}</div>
+          <div style="font-size:.8rem;color:var(--text-muted);">${fmtDate(a.appointmentDate)} · ${a.timeSlot?.startTime || ''} · ${a.serviceType}</div>
+          ${alreadyRated ? `<div style="color:#f59e0b;font-size:.8rem;">★ ${a.rating.score}/5 ${a.rating.review ? '— ' + a.rating.review : ''}</div>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span class="badge ${STATUS_BADGE[a.status] || 'badge-teal'}">${a.status.replace('_',' ')}</span>
+          ${['pending','confirmed'].includes(a.status) ? `<button class="btn btn-secondary btn-sm" data-cancel="${a._id}">Cancel</button>` : ''}
+          ${canRate ? `<button class="btn btn-sm" style="background:#f59e0b;color:white;border-color:#f59e0b;" onclick="openRatingModal('${a._id}','${(a.clinic?.name||'').replace(/'/g,'\\\'')}')" >⭐ Rate Visit</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    listEl.querySelectorAll('[data-cancel]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Cancel this appointment?')) return;
+        try {
+          await apiFetch(`/api/appointment/${btn.dataset.cancel}/cancel`, { method:'PATCH', body: JSON.stringify({ reason:'Cancelled by patient' }) });
+          loadAppointments();
+        } catch (e) { alert(e.message); }
+      });
+    });
+    if (upcoming.length) {
+      const next = upcoming.sort((a,b) => new Date(a.appointmentDate) - new Date(b.appointmentDate))[0];
+      nextEl.innerHTML = `<div class="history-item" style="border:none;padding:0;">
+        <div><div style="font-weight:700;">${next.clinic?.name || 'Clinic'}</div><div style="font-size:.8rem;color:var(--text-muted);">${fmtDate(next.appointmentDate)} · ${next.timeSlot?.startTime || ''}</div></div>
+        <span class="badge ${STATUS_BADGE[next.status]}">${next.status}</span>
+      </div>`;
+    } else {
+      nextEl.innerHTML = `<p>No upcoming appointments. <a href="appointment.html" class="text-primary fw-600">Book one now</a>.</p>`;
+    }
+  } catch (e) {
+    document.getElementById('appointments-list').innerHTML = `<p>Could not load your appointments right now.</p>`;
+  }
+}
+
+if (user) { loadProfile(); loadAssessments(); loadAppointments(); }
+</script>
+</body>
+</html>

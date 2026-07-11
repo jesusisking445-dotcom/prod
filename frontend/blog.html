@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dental Health Blog — HomoDentHealth</title>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  .blog-layout { display: grid; grid-template-columns: 1fr 300px; gap: 32px; align-items: flex-start; }
+  .category-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 100px; font-size: 0.82rem; font-weight: 600;
+    border: 1.5px solid var(--border); color: var(--text-muted); background: white;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .category-pill:hover { border-color: var(--secondary); color: var(--primary); }
+  .category-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .sidebar-card { background: white; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; }
+  .popular-post { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #F0F7F7; }
+  .popular-post:last-child { border-bottom: none; }
+  .popular-thumb { width: 48px; height: 48px; border-radius: 8px; background: var(--light-teal); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+  .popular-title { font-size: 0.85rem; font-weight: 600; line-height: 1.4; }
+  .popular-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; }
+  .share-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--border);
+    background: white; color: var(--primary); font-size: 1rem; cursor: pointer; transition: all 0.2s;
+  }
+  .share-btn:hover { background: var(--light-teal); border-color: var(--secondary); }
+  .comment { display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid #F0F7F7; }
+  .comment:last-child { border-bottom: none; }
+  .comment-body { flex: 1; }
+  .comment-name { font-weight: 700; font-size: 0.875rem; }
+  .comment-date { font-size: 0.75rem; color: var(--text-muted); margin-left: 8px; }
+  .comment-text { font-size: 0.875rem; color: var(--text-muted); margin-top: 4px; line-height: 1.6; }
+  .like-btn { display:inline-flex;align-items:center;gap:5px;background:none;border:1.5px solid var(--border);border-radius:100px;padding:5px 13px;font-size:.82rem;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all .2s; }
+  .like-btn:hover,.like-btn.liked { background:var(--light-teal);border-color:var(--secondary);color:var(--primary); }
+  .comment-form { margin-top:20px; }
+  .comment-login-note { font-size:.82rem;color:var(--text-muted);margin-top:8px; }
+  @media (max-width: 900px) { .blog-layout { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="nav-logo"><img src="images/logo.png" alt="HomoDentHealth" class="nav-logo-img" /></a>
+    <div class="nav-links"><a href="index.html">Home</a><a href="about.html">About</a><a href="services.html">Services</a><a href="clinics.html">Find Clinics</a><a href="blog.html">Health Blog</a><a href="videos.html">Videos</a><a href="contact.html">Contact</a></div>
+    <div class="nav-actions"><a href="auth.html" class="btn btn-secondary btn-sm">Login</a><a href="auth.html" class="btn btn-primary btn-sm">Register</a></div>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html">Home</a><a href="about.html">About</a><a href="services.html">Services</a><a href="clinics.html">Find Clinics</a><a href="blog.html">Health Blog</a><a href="videos.html">Videos</a><a href="contact.html">Contact</a>
+    <div class="m-actions"><a href="auth.html" class="btn btn-secondary btn-sm">Login</a><a href="auth.html" class="btn btn-primary btn-sm">Register</a></div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="breadcrumb"><a href="index.html">Home</a> › Health Blog</div>
+  <h1>Dental Health & Education Blog</h1>
+  <p>Practical, easy-to-understand articles to help you take better care of your teeth and gums.</p>
+</div>
+
+<section style="background:var(--bg);">
+  <div class="container-wide">
+
+    <!-- Search -->
+    <div class="card mb-24" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;">
+      <input type="text" id="blog-search" class="form-control" placeholder="Search articles (e.g. toothache, brushing, gum bleeding)..." style="flex:1;min-width:240px;"/>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div class="category-pill active" data-cat="all">All</div>
+        <div class="category-pill" data-cat="pain">Toothache</div>
+        <div class="category-pill" data-cat="hygiene">Oral Hygiene</div>
+        <div class="category-pill" data-cat="gum">Gum Health</div>
+        <div class="category-pill" data-cat="emergency">Emergencies</div>
+        <div class="category-pill" data-cat="nutrition">Nutrition</div>
+      </div>
+    </div>
+
+    <div class="blog-layout">
+      <!-- Articles Grid -->
+      <div>
+        <div class="grid-2" id="blog-grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));">
+
+          <article class="blog-card" data-cat="pain" data-title="What Causes Toothache? 7 Common Reasons">
+            <div class="blog-thumb">🦷</div>
+            <div class="blog-body">
+              <div class="blog-category">Toothache</div>
+              <h3 class="blog-title">What Causes Toothache? 7 Common Reasons Explained</h3>
+              <p class="blog-excerpt">From cavities to cracked teeth — learn the most common causes of tooth pain and which ones need urgent attention.</p>
+              <div class="blog-meta"><span>📅 May 12, 2024</span><span>⏱ 5 min read</span></div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:16px;">
+                <a href="#" class="btn btn-secondary btn-sm" onclick="openArticle(this); return false;">Read Article →</a>
+                <button class="like-btn" onclick="toggleLike(this, null)">❤️ <span class="like-count">0</span></button>
+              </div>
+            </div>
+          </article>
+
+          <article class="blog-card" data-cat="hygiene" data-title="How to Brush Your Teeth Properly">
+            <div class="blog-thumb">🪥</div>
+            <div class="blog-body">
+              <div class="blog-category">Oral Hygiene</div>
+              <h3 class="blog-title">How to Brush Your Teeth Properly (Step-by-Step Guide)</h3>
+              <p class="blog-excerpt">Most people brush incorrectly. Here's the dentist-recommended technique for cleaner teeth and healthier gums.</p>
+              <div class="blog-meta"><span>📅 May 8, 2024</span><span>⏱ 4 min read</span></div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:16px;">
+                <a href="#" class="btn btn-secondary btn-sm" onclick="openArticle(this); return false;">Read Article →</a>
+                <button class="like-btn" onclick="toggleLike(this, null)">❤️ <span class="like-count">0</span></button>
+              </div>
+            </div>
+          </article>
+
+          <article class="blog-card" data-cat="gum" data-title="Why Are My Gums Bleeding?">
+            <div class="blog-thumb">🩸</div>
+            <div class="blog-body">
+              <div class="blog-category">Gum Health</div>
+              <h3 class="blog-title">Why Are My Gums Bleeding When I Brush?</h3>
+              <p class="blog-excerpt">Bleeding gums are often the first sign of gingivitis. Find out what causes it and how to reverse it early.</p>
+              <div class="blog-meta"><span>📅 May 3, 2024</span><span>⏱ 6 min read</span></div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:16px;">
+                <a href="#" class="btn btn-secondary btn-sm" onclick="openArticle(this); return false;">Read Article →</a>
+                <button class="like-btn" onclick="toggleLike(this, null)">❤️ <span class="like-count">0</span></button>
+              </div>
+            </div>
+          </article>
+
+          <article class="blog-card" data-cat="emergency" data-title="5 Dental Emergencies You Shouldn't Ignore">
+            <div class="blog-thumb">🚨</div>
+            <div class="blog-body">
+              <div class="blog-category">Emergencies</div>
+              <h3 class="blog-title">5 Dental Emergencies You Should Never Ignore</h3>
+              <p class="blog-excerpt">Knocked-out tooth? Facial swelling? Learn which symptoms mean you need to see a dentist immediately.</p>
+              <div class="blog-meta"><span>📅 April 28, 2024</span><span>⏱ 5 min read</span></div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:16px;">
+                <a href="#" class="btn btn-secondary btn-sm" onclick="openArticle(this); return false;">Read Article →</a>
+                <button class="like-btn" onclick="toggleLike(this, null)">❤️ <span class="like-count">0</span></button>
+              </div>
+            </div>
+          </article>
+
+          <article class="blog-card" data-cat="nutrition" data-title="Foods That Are Secretly Damaging Your Teeth">
+            <div class="blog-thumb">🍬</div>
+            <div class="blog-body">
+              <div class="blog-category">Nutrition</div>
+              <h3 class="blog-title">Foods That Are Secretly Damaging Your Teeth</h3>
+              <p class="blog-excerpt">It's not just sugar. Discover the surprising foods and drinks that erode enamel over time — and healthier swaps.</p>
+              <div class="blog-meta"><span>📅 April 20, 2024</span><span>⏱ 4 min read</span></div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:16px;">
+                <a href="#" class="btn btn-secondary btn-sm" onclick="openArticle(this); return false;">Read Article →</a>
+                <button class="like-btn" onclick="toggleLike(this, null)">❤️ <span class="like-count">0</span></button>
+              </div>
+            </div>
+          </article>
+
+          <article class="blog-card" data-cat="hygiene" data-title="Mouthwash: Do You Really Need It?">
+            <div class="blog-thumb">🧪</div>
+            <div class="blog-body">
+              <div class="blog-category">Oral Hygiene</div>
+              <h3 class="blog-title">Mouthwash: Do You Really Need It?</h3>
+              <p class="blog-excerpt">A look at when mouthwash helps, when it doesn't, and how to choose the right type for your needs.</p>
+              <div class="blog-meta"><span>📅 April 15, 2024</span><span>⏱ 3 min read</span></div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:16px;">
+                <a href="#" class="btn btn-secondary btn-sm" onclick="openArticle(this); return false;">Read Article →</a>
+                <button class="like-btn" onclick="toggleLike(this, null)">❤️ <span class="like-count">0</span></button>
+              </div>
+            </div>
+          </article>
+
+          <article class="blog-card" data-cat="gum" data-title="Gum Disease 101: Stages and Treatment">
+            <div class="blog-thumb">🦠</div>
+            <div class="blog-body">
+              <div class="blog-category">Gum Health</div>
+              <h3 class="blog-title">Gum Disease 101: Stages, Symptoms, and Treatment</h3>
+              <p class="blog-excerpt">From gingivitis to periodontitis — understand how gum disease progresses and how it's treated at each stage.</p>
+              <div class="blog-meta"><span>📅 April 10, 2024</span><span>⏱ 7 min read</span></div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:16px;">
+                <a href="#" class="btn btn-secondary btn-sm" onclick="openArticle(this); return false;">Read Article →</a>
+                <button class="like-btn" onclick="toggleLike(this, null)">❤️ <span class="like-count">0</span></button>
+              </div>
+            </div>
+          </article>
+
+          <article class="blog-card" data-cat="pain" data-title="Sensitive Teeth: Causes and Relief">
+            <div class="blog-thumb">🌡️</div>
+            <div class="blog-body">
+              <div class="blog-category">Toothache</div>
+              <h3 class="blog-title">Sensitive Teeth: Why It Happens and How to Get Relief</h3>
+              <p class="blog-excerpt">Wincing at cold drinks? Here's why teeth become sensitive and simple steps to reduce the discomfort.</p>
+              <div class="blog-meta"><span>📅 April 2, 2024</span><span>⏱ 4 min read</span></div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:16px;">
+                <a href="#" class="btn btn-secondary btn-sm" onclick="openArticle(this); return false;">Read Article →</a>
+                <button class="like-btn" onclick="toggleLike(this, null)">❤️ <span class="like-count">0</span></button>
+              </div>
+            </div>
+          </article>
+
+        </div>
+
+        <div id="no-results" class="card text-center" style="display:none;padding:40px;">
+          <div style="font-size:2.5rem;margin-bottom:12px;">🔍</div>
+          <h4>No articles found</h4>
+          <p>Try a different search term or category.</p>
+        </div>
+
+        <!-- Sample full article + comments (shown when "Read Article" clicked) -->
+        <div class="card mt-32" id="live-article-view" style="display:none;">
+          <button class="btn btn-secondary btn-sm mb-16" onclick="closeLiveArticle()">← Back to articles</button>
+          <div class="blog-category" id="live-article-category"></div>
+          <h2 id="live-article-title" style="margin:8px 0 16px;"></h2>
+          <div class="blog-meta mb-16" id="live-article-meta"></div>
+          <div id="live-article-content" style="white-space:pre-wrap;line-height:1.8;color:var(--text-muted);margin-bottom:24px;"></div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+            <button class="like-btn" id="live-like-btn" onclick="toggleLike(this, currentArticleId)">❤️ Like &nbsp;<span class="like-count">0</span></button>
+            <span style="font-size:.82rem;color:var(--text-muted);">Helpful? Let us know!</span>
+          </div>
+          <div class="divider"></div>
+          <!-- Real comments section for live posts -->
+          <div id="live-comments-section">
+            <h4 class="mb-16" id="live-comment-count">Comments (0)</h4>
+            <div id="live-comments-list"></div>
+            <div class="comment-form mt-20">
+              <div class="form-group">
+                <label for="live-new-comment">Add a comment</label>
+                <textarea id="live-new-comment" class="form-control" rows="3" placeholder="Share your thoughts or experience..."></textarea>
+              </div>
+              <p class="comment-login-note" id="live-comment-login-note" style="display:none;">
+                <a href="auth.html" class="text-primary fw-600">Log in</a> to post a comment.
+              </p>
+              <button class="btn btn-primary mt-8" id="btn-post-live-comment">Post Comment</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-32" id="article-view" style="display:none;">
+          <button class="btn btn-ghost btn-sm" onclick="closeArticle()" style="margin-bottom:16px;">← Back to articles</button>
+          <div class="blog-category" id="article-category">Toothache</div>
+          <h2 id="article-title" style="margin:8px 0 16px;">What Causes Toothache? 7 Common Reasons Explained</h2>
+          <div class="blog-meta mb-24"><span>📅 May 12, 2024</span><span>⏱ 5 min read</span><span>✍️ Dr. Kunle Bello</span></div>
+          <div style="font-size:0.95rem;color:var(--text);line-height:1.85;">
+            <p style="color:var(--text);margin-bottom:14px;">Tooth pain can range from a dull, occasional ache to a sharp, persistent throb that disrupts your daily life. Understanding what's behind your discomfort is the first step toward relief — and toward knowing when home care is enough versus when you need to see a dentist.</p>
+            <p style="color:var(--text);margin-bottom:14px;"><strong>1. Tooth decay (cavities)</strong> — Bacteria break down tooth enamel, creating small holes that expose the sensitive inner layers. This often causes sharp pain when eating something sweet, hot, or cold.</p>
+            <p style="color:var(--text);margin-bottom:14px;"><strong>2. Gum disease</strong> — Inflammation and infection of the gums can cause aching pain around the base of your teeth, often accompanied by bleeding or swelling.</p>
+            <p style="color:var(--text);margin-bottom:14px;"><strong>3. Cracked or fractured tooth</strong> — A crack may not be visible but can cause sharp pain when biting down, especially if it reaches the nerve.</p>
+            <p style="color:var(--text);margin-bottom:14px;"><strong>4. Abscess (infection)</strong> — A pocket of pus caused by bacterial infection can cause severe, throbbing pain, often with swelling and fever. This requires urgent dental attention.</p>
+            <p style="color:var(--text);margin-bottom:14px;"><strong>5. Sinus issues</strong> — Sinus infections can sometimes feel like tooth pain in the upper back teeth due to their proximity to the sinus cavities.</p>
+            <p style="color:var(--text);margin-bottom:14px;"><strong>6. Teeth grinding (bruxism)</strong> — Grinding your teeth, often during sleep, can wear down enamel and cause jaw and tooth pain.</p>
+            <p style="color:var(--text);margin-bottom:14px;"><strong>7. Newly erupting teeth</strong> — Wisdom teeth or other emerging teeth can cause pressure and pain in the surrounding gum and jaw area.</p>
+            <div class="alert alert-info mt-24">
+              <span class="alert-icon">ℹ️</span>
+              <div>If your toothache is severe, persistent, or accompanied by swelling or fever, use our <a href="assessment.html" class="text-primary fw-600">Symptom Assessment tool</a> to check your urgency level.</div>
+            </div>
+          </div>
+
+          <!-- Share buttons -->
+          <div class="flex-center gap-12 mt-32">
+            <span class="fw-600" style="font-size:0.875rem;">Share this article:</span>
+            <button class="share-btn" title="Share on WhatsApp">💬</button>
+            <button class="share-btn" title="Share on Facebook">📘</button>
+            <button class="share-btn" title="Share on Twitter/X">✖️</button>
+            <button class="share-btn" title="Copy link" onclick="copyLink()">🔗</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Comments -->
+          <h4 class="mb-16">Comments (3)</h4>
+          <div class="comment">
+            <div class="author-avatar">CN</div>
+            <div class="comment-body">
+              <span class="comment-name">Chioma N.</span><span class="comment-date">2 days ago</span>
+              <div class="comment-text">This explained exactly what I was feeling. I had the throbbing pain with swelling described in #4 — went to the dentist immediately. So glad I caught it early!</div>
+            </div>
+          </div>
+          <div class="comment">
+            <div class="author-avatar">TA</div>
+            <div class="comment-body">
+              <span class="comment-name">Tunde A.</span><span class="comment-date">5 days ago</span>
+              <div class="comment-text">Didn't realize sinus issues could feel like a toothache. Very helpful breakdown, thank you!</div>
+            </div>
+          </div>
+          <div class="comment">
+            <div class="author-avatar">BF</div>
+            <div class="comment-body">
+              <span class="comment-name">Blessing F.</span><span class="comment-date">1 week ago</span>
+              <div class="comment-text">Used the symptom checker after reading this and it correctly flagged my case as moderate. Booked an appointment right after.</div>
+            </div>
+          </div>
+
+          <!-- Add comment -->
+          <div class="form-group mt-24">
+            <label for="new-comment">Add a comment</label>
+            <textarea id="new-comment" class="form-control" rows="3" placeholder="Share your thoughts or experience..."></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="postComment()">Post Comment</button>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <aside style="display:flex;flex-direction:column;gap:20px;">
+        <div class="sidebar-card">
+          <h4 class="mb-16">📌 Popular Articles</h4>
+          <div class="popular-post">
+            <div class="popular-thumb">🦷</div>
+            <div><div class="popular-title">What Causes Toothache? 7 Common Reasons</div><div class="popular-meta">4,210 reads</div></div>
+          </div>
+          <div class="popular-post">
+            <div class="popular-thumb">🩸</div>
+            <div><div class="popular-title">Why Are My Gums Bleeding?</div><div class="popular-meta">3,580 reads</div></div>
+          </div>
+          <div class="popular-post">
+            <div class="popular-thumb">🚨</div>
+            <div><div class="popular-title">5 Dental Emergencies You Shouldn't Ignore</div><div class="popular-meta">3,120 reads</div></div>
+          </div>
+          <div class="popular-post">
+            <div class="popular-thumb">🪥</div>
+            <div><div class="popular-title">How to Brush Your Teeth Properly</div><div class="popular-meta">2,940 reads</div></div>
+          </div>
+        </div>
+
+        <div class="sidebar-card" style="background:var(--light-teal);border-color:var(--border);">
+          <h4 class="mb-8">🦷 Not sure what's wrong?</h4>
+          <p style="font-size:0.85rem;margin-bottom:16px;">Use our free AI symptom checker to get instant guidance.</p>
+          <a href="assessment.html" class="btn btn-primary" style="width:100%;justify-content:center;">Check Symptoms</a>
+        </div>
+
+        <div class="sidebar-card">
+          <h4 class="mb-16">🏷️ Categories</h4>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div class="flex-between"><span style="font-size:0.875rem;">Toothache</span><span class="badge badge-teal">2</span></div>
+            <div class="flex-between"><span style="font-size:0.875rem;">Oral Hygiene</span><span class="badge badge-teal">2</span></div>
+            <div class="flex-between"><span style="font-size:0.875rem;">Gum Health</span><span class="badge badge-teal">2</span></div>
+            <div class="flex-between"><span style="font-size:0.875rem;">Emergencies</span><span class="badge badge-teal">1</span></div>
+            <div class="flex-between"><span style="font-size:0.875rem;">Nutrition</span><span class="badge badge-teal">1</span></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-disclaimer"><strong>Medical Disclaimer:</strong> Articles on this blog are for general education only and are not a substitute for professional dental advice.</div>
+    <div class="footer-grid">
+      <div class="footer-brand"><div class="footer-logo"><img src="images/logo.png" alt="HomoDentHealth" style="height:28px;object-fit:contain;" /></div><p>Nigeria's AI-assisted dental screening and referral platform.</p></div>
+      <div class="footer-col"><h4>Platform</h4><ul><li><a href="assessment.html">Symptom Checker</a></li><li><a href="clinics.html">Find Clinics</a></li><li><a href="appointment.html">Book Appointment</a></li></ul></div>
+      <div class="footer-col"><h4>Company</h4><ul><li><a href="about.html">About Us</a></li><li><a href="services.html">Services</a></li><li><a href="blog.html">Health Blog</a></li><li><a href="videos.html">Video Library</a></li></ul></div>
+      <div class="footer-col"><h4>Contact</h4><ul><li><a href="contact.html">Get in Touch</a></li><li><a href="privacy.html">Privacy Policy</a></li></ul></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 HomoDentHealth.</span></div>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="main.js"></script>
+<script>
+  // ── Live articles from the database (admin-published) ──
+  // These are merged in alongside the curated articles below. Category
+  // values use a separate "platform" pill since they come from the
+  // backend's category taxonomy rather than the static page's filter set.
+  let livePosts = [];
+
+  async function loadLivePosts() {
+    try {
+      const res = await apiFetch('/api/blog?limit=20');
+      livePosts = res.posts || [];
+      if (!livePosts.length) return;
+
+      const grid = document.getElementById('blog-grid');
+      const catLabel = { 'dental-health':'Dental Health','oral-hygiene':'Oral Hygiene','treatment-guide':'Treatment Guide','lifestyle':'Lifestyle','emergency':'Emergency','kids-dental':"Kids' Dental" };
+
+      livePosts.forEach((p, i) => {
+        const card = document.createElement('article');
+        card.className = 'blog-card';
+        card.dataset.cat = 'platform';
+        card.innerHTML = `
+          <div class="blog-thumb">📰</div>
+          <div class="blog-body">
+            <div class="blog-category">${catLabel[p.category] || p.category}</div>
+            <h3 class="blog-title">${p.title}</h3>
+            <p class="blog-excerpt">${p.excerpt || ''}</p>
+            <div class="blog-meta"><span>📅 ${new Date(p.publishedAt || p.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</span>${p.author ? `<span>✍️ ${p.author.firstName} ${p.author.lastName}</span>` : ''}</div>
+            <a href="#" class="btn btn-secondary btn-sm mt-16" onclick="openLiveArticle(${i}); return false;">Read Article →</a>
+          </div>`;
+        grid.insertBefore(card, grid.firstChild);
+      });
+
+      // Add a filter pill for platform-published articles if not present
+      if (!document.querySelector('.category-pill[data-cat="platform"]')) {
+        const pillBar = document.querySelector('.category-pill').parentElement;
+        const pill = document.createElement('button');
+        pill.className = 'category-pill';
+        pill.dataset.cat = 'platform';
+        pill.textContent = 'Platform Updates';
+        pill.addEventListener('click', () => {
+          document.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+          filterArticles();
+        });
+        pillBar.appendChild(pill);
+      }
+    } catch (e) { /* no published articles yet, or backend unreachable — static articles still work */ }
+  }
+
+  function openLiveArticle(i) {
+    const p = livePosts[i];
+    if (!p) return;
+    currentArticleId = p._id;
+    // Update like button with real count
+    const likeBtn = document.getElementById('live-like-btn');
+    likeBtn.classList.remove('liked');
+    likeBtn.querySelector('.like-count').textContent = p.likes || 0;
+    document.getElementById('live-article-category').textContent = p.category;
+    document.getElementById('live-article-title').textContent = p.title;
+    document.getElementById('live-article-meta').textContent = new Date(p.publishedAt || p.createdAt).toLocaleDateString();
+    document.getElementById('live-article-content').textContent = p.content;
+    document.getElementById('blog-grid').style.display = 'none';
+    document.getElementById('no-results').style.display = 'none';
+    document.querySelector('.card.mb-24').style.display = 'none';
+    document.getElementById('live-article-view').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Load real comments
+    loadComments(p._id);
+    // Show login note if not authenticated
+    const user = Store.load('user');
+    const loginNote = document.getElementById('live-comment-login-note');
+    const commentArea = document.getElementById('live-new-comment');
+    const postBtn = document.getElementById('btn-post-live-comment');
+    if (!user) {
+      loginNote.style.display = 'block';
+      commentArea.disabled = true;
+      postBtn.disabled = true;
+    } else {
+      loginNote.style.display = 'none';
+      commentArea.disabled = false;
+      postBtn.disabled = false;
+    }
+  }
+  function closeLiveArticle() {
+    document.getElementById('live-article-view').style.display = 'none';
+    document.getElementById('blog-grid').style.display = 'grid';
+    document.querySelector('.card.mb-24').style.display = 'flex';
+    filterArticles();
+  }
+
+  loadLivePosts();
+
+  document.getElementById('btn-post-live-comment').addEventListener('click', async () => {
+    const textarea = document.getElementById('live-new-comment');
+    const text = textarea.value.trim();
+    if (!text) return;
+    const user = Store.load('user');
+    if (!user) { alert('Please log in to comment.'); return; }
+    const name = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'You';
+    const initials = name.slice(0,2).toUpperCase();
+    try {
+      if (currentArticleId) {
+        await apiFetch(`/api/blog/${currentArticleId}/comment`, {
+          method: 'POST', body: JSON.stringify({ text })
+        });
+      }
+    } catch (e) { /* show locally even if API call fails */ }
+    const commentDiv = document.createElement('div');
+    commentDiv.className = 'comment';
+    commentDiv.innerHTML = `<div class="author-avatar">${initials}</div>
+      <div class="comment-body">
+        <span class="comment-name">${name}</span><span class="comment-date"> Just now</span>
+        <div class="comment-text">${text.replace(/</g,'&lt;')}</div>
+      </div>`;
+    document.getElementById('live-comments-list').appendChild(commentDiv);
+    textarea.value = '';
+    const cntEl = document.getElementById('live-comment-count');
+    const n = document.querySelectorAll('#live-comments-list .comment').length;
+    cntEl.textContent = `Comments (${n})`;
+  });
+</script>
+<script>
+  // ── Category filter ──────────────────────────────
+  document.querySelectorAll('.category-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      filterArticles();
+    });
+  });
+  document.getElementById('blog-search').addEventListener('input', filterArticles);
+
+  function filterArticles() {
+    const activeCat = document.querySelector('.category-pill.active').dataset.cat;
+    const query = document.getElementById('blog-search').value.toLowerCase();
+    let visibleCount = 0;
+    document.querySelectorAll('#blog-grid .blog-card').forEach(card => {
+      const matchesCat = activeCat === 'all' || card.dataset.cat === activeCat;
+      const matchesSearch = card.textContent.toLowerCase().includes(query);
+      const visible = matchesCat && matchesSearch;
+      card.style.display = visible ? '' : 'none';
+      if (visible) visibleCount++;
+    });
+    document.getElementById('no-results').style.display = visibleCount === 0 ? 'block' : 'none';
+  }
+
+  // ── Article view toggle ──────────────────────────
+  function openArticle(el) {
+    const card = el.closest('.blog-card');
+    document.getElementById('article-category').textContent = card.querySelector('.blog-category').textContent;
+    document.getElementById('article-title').textContent = card.dataset.title;
+    document.getElementById('blog-grid').style.display = 'none';
+    document.getElementById('no-results').style.display = 'none';
+    document.querySelector('.card.mb-24').style.display = 'none';
+    document.getElementById('article-view').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function closeArticle() {
+    document.getElementById('article-view').style.display = 'none';
+    document.getElementById('blog-grid').style.display = 'grid';
+    document.querySelector('.card.mb-24').style.display = 'flex';
+    filterArticles();
+  }
+  function copyLink() {
+    navigator.clipboard?.writeText(window.location.href);
+    alert('Link copied to clipboard!');
+  }
+  // ── Feature 2: Real Comments via API ────────────────────
+  let currentArticleId = null; // set when a live article is opened
+
+  async function postComment() {
+    const textarea = document.getElementById('new-comment');
+    const text = textarea.value.trim();
+    if (!text) { alert('Please write a comment first.'); return; }
+    const user = Store.load('user');
+    if (currentArticleId) {
+      // Live post — send to backend
+      try {
+        const res = await apiFetch(`/api/blog/${currentArticleId}/comment`, {
+          method: 'POST', body: JSON.stringify({ text })
+        });
+        const c = res.comment;
+        const name = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'You' : 'You';
+        const initials = name.slice(0,2).toUpperCase();
+        const commentDiv = document.createElement('div');
+        commentDiv.className = 'comment';
+        commentDiv.innerHTML = `<div class="author-avatar">${initials}</div>
+          <div class="comment-body">
+            <span class="comment-name">${name}</span><span class="comment-date"> Just now</span>
+            <div class="comment-text">${text.replace(/</g,'&lt;')}</div>
+          </div>`;
+        document.querySelector('.divider').insertAdjacentElement('afterend', commentDiv);
+        textarea.value = '';
+        // Update comment count badge
+        const cntEl = document.getElementById('comment-count');
+        if (cntEl) cntEl.textContent = `Comments (${document.querySelectorAll('#article-view .comment').length})`;
+        return;
+      } catch (e) { /* fall through to local render on error */ }
+    }
+    // Static article — local render only
+    const user2 = Store.load('user');
+    const name = user2 ? `${user2.firstName || ''} ${user2.lastName || ''}`.trim() || 'You' : 'You';
+    const commentDiv = document.createElement('div');
+    commentDiv.className = 'comment';
+    commentDiv.innerHTML = `<div class="author-avatar">${name.slice(0,2).toUpperCase()}</div>
+      <div class="comment-body">
+        <span class="comment-name">${name}</span><span class="comment-date"> Just now</span>
+        <div class="comment-text">${text.replace(/</g,'&lt;')}</div>
+      </div>`;
+    document.querySelector('.divider').insertAdjacentElement('afterend', commentDiv);
+    textarea.value = '';
+  }
+
+  // ── Feature 2: Load real comments for a live post ───────
+  async function loadComments(postId) {
+    const commentsSection = document.getElementById('live-comments-section');
+    const commentsContainer = document.getElementById('live-comments-list');
+    if (!commentsSection || !commentsContainer) return;
+    try {
+      const res = await apiFetch(`/api/blog/${postId}`);
+      const comments = res.post?.comments || [];
+      document.getElementById('live-comment-count').textContent = `Comments (${comments.length})`;
+      commentsContainer.innerHTML = comments.length ? comments.map(c => {
+        const name = c.user ? `${c.user.firstName || ''} ${c.user.lastName || ''}`.trim() || 'User' : 'User';
+        return `<div class="comment">
+          <div class="author-avatar">${name.slice(0,2).toUpperCase()}</div>
+          <div class="comment-body">
+            <span class="comment-name">${name}</span><span class="comment-date"> ${new Date(c.createdAt).toLocaleDateString()}</span>
+            <div class="comment-text">${(c.text||'').replace(/</g,'&lt;')}</div>
+          </div></div>`;
+      }).join('') : '<p style="color:var(--text-muted);font-size:.875rem;">No comments yet. Be the first!</p>';
+    } catch (e) {}
+  }
+
+  // ── Feature 2: Like button ────────────────────────────────
+  window.toggleLike = async function(btn, postId) {
+    const liked = btn.classList.toggle('liked');
+    const countEl = btn.querySelector('.like-count');
+    const prev = parseInt(countEl.textContent) || 0;
+    countEl.textContent = liked ? prev + 1 : Math.max(0, prev - 1);
+    if (!postId) return;
+    try {
+      await apiFetch(`/api/blog/${postId}/like`, { method: 'POST' });
+    } catch (e) {}
+  };
+</script>
+</body>
+</html>

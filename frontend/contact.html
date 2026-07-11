@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Contact Us — HomoDentHealth</title>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  .contact-layout { display: grid; grid-template-columns: 1fr 1.3fr; gap: 32px; align-items: flex-start; }
+  .contact-info-item { display: flex; gap: 16px; align-items: flex-start; padding: 18px 0; border-bottom: 1px solid #F0F7F7; }
+  .contact-info-item:last-child { border-bottom: none; }
+  .contact-info-icon {
+    width: 46px; height: 46px; border-radius: 12px; background: var(--light-teal);
+    display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;
+  }
+  /* Live chat widget */
+  #chat-bubble {
+    position: fixed; bottom: 24px; right: 24px; z-index: 998;
+    width: 60px; height: 60px; border-radius: 50%; background: var(--primary); color: white;
+    display: flex; align-items: center; justify-content: center; font-size: 1.6rem;
+    box-shadow: var(--shadow-lg); cursor: pointer; border: none; transition: transform 0.2s;
+  }
+  #chat-bubble:hover { transform: scale(1.08); }
+  #chat-window {
+    position: fixed; bottom: 96px; right: 24px; z-index: 998;
+    width: 340px; max-width: calc(100vw - 48px); height: 440px;
+    background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border); display: none; flex-direction: column; overflow: hidden;
+  }
+  #chat-window.open { display: flex; }
+  .chat-header { background: var(--primary); color: white; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; }
+  .chat-header h4 { color: white; font-size: 0.95rem; }
+  .chat-header span { font-size: 0.75rem; color: rgba(255,255,255,0.75); }
+  .chat-close { background: rgba(255,255,255,0.15); border: none; color: white; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 1rem; }
+  .chat-body { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+  .chat-msg { max-width: 80%; padding: 10px 14px; border-radius: 14px; font-size: 0.85rem; line-height: 1.5; }
+  .chat-msg.bot { background: var(--light-teal); color: var(--text); align-self: flex-start; border-radius: 14px 14px 14px 4px; }
+  .chat-msg.user { background: var(--primary); color: white; align-self: flex-end; border-radius: 14px 14px 4px 14px; }
+  .chat-input-row { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--border); }
+  .chat-input-row input { flex: 1; border: 1.5px solid var(--border); border-radius: 100px; padding: 9px 16px; font-size: 0.85rem; outline: none; }
+  .chat-input-row input:focus { border-color: var(--secondary); }
+  .chat-send { background: var(--primary); color: white; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; font-size: 1rem; flex-shrink: 0; }
+  @media (max-width: 900px) { .contact-layout { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="nav-logo"><img src="images/logo.png" alt="HomoDentHealth" style="height:34px;object-fit:contain;" /></a>
+    <div class="nav-links"><a href="index.html">Home</a><a href="about.html">About</a><a href="services.html">Services</a><a href="clinics.html">Find Clinics</a><a href="blog.html">Health Blog</a><a href="videos.html">Videos</a><a href="contact.html">Contact</a></div>
+    <div class="nav-actions"><a href="auth.html" class="btn btn-secondary btn-sm">Login</a><a href="auth.html" class="btn btn-primary btn-sm">Register</a></div>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html">Home</a><a href="about.html">About</a><a href="services.html">Services</a><a href="clinics.html">Find Clinics</a><a href="blog.html">Health Blog</a><a href="videos.html">Videos</a><a href="contact.html">Contact</a>
+    <div class="m-actions"><a href="auth.html" class="btn btn-secondary btn-sm">Login</a><a href="auth.html" class="btn btn-primary btn-sm">Register</a></div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="breadcrumb"><a href="index.html">Home</a> › Contact</div>
+  <h1>Get in Touch</h1>
+  <p>Have a question, feedback, or partnership inquiry? We'd love to hear from you.</p>
+</div>
+
+<!-- Emergency note -->
+<section class="tight" style="background:white;border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div class="alert alert-danger">
+      <span class="alert-icon">🚨</span>
+      <div><strong>Dental emergency?</strong> Please don't wait for a reply here — go to the nearest hospital emergency room or call <strong>112</strong> immediately. Use this contact form for non-urgent inquiries only.</div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--bg);">
+  <div class="container">
+    <div class="contact-layout">
+
+      <!-- Contact Info -->
+      <div>
+        <div class="card mb-24">
+          <h3 class="mb-16">Contact Information</h3>
+          <div class="contact-info-item">
+            <div class="contact-info-icon">📞</div>
+            <div>
+              <div class="fw-700" style="font-size:0.9rem;">Phone</div>
+              <p style="font-size:0.85rem;margin-top:2px;">+234 800 123 4567<br>+234 700 DENTAL-AI</p>
+            </div>
+          </div>
+          <div class="contact-info-item">
+            <div class="contact-info-icon">✉️</div>
+            <div>
+              <div class="fw-700" style="font-size:0.9rem;">Email</div>
+              <p style="font-size:0.85rem;margin-top:2px;">support@homodenthealth.ng<br>partnerships@homodenthealth.ng</p>
+            </div>
+          </div>
+          <div class="contact-info-item">
+            <div class="contact-info-icon">📍</div>
+            <div>
+              <div class="fw-700" style="font-size:0.9rem;">Head Office</div>
+              <p style="font-size:0.85rem;margin-top:2px;">Ilese-Ijebu,<br>Ijebu-Ode, Ogun, Nigeria</p>
+            </div>
+          </div>
+          <div class="contact-info-item">
+            <div class="contact-info-icon">🕐</div>
+            <div>
+              <div class="fw-700" style="font-size:0.9rem;">Support Hours</div>
+              <p style="font-size:0.85rem;margin-top:2px;">Mon–Fri: 8:00 AM – 8:00 PM<br>Sat–Sun: 9:00 AM – 5:00 PM</p>
+            </div>
+          </div>
+          <div class="contact-info-item">
+            <div class="contact-info-icon">💬</div>
+            <div>
+              <div class="fw-700" style="font-size:0.9rem;">Live Chat</div>
+              <p style="font-size:0.85rem;margin-top:2px;">Available 24/7 — click the chat icon in the corner of your screen.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Map -->
+        <div class="card" style="padding:0;overflow:hidden;">
+          <iframe
+            title="HomoDentHealth office location map"
+            width="100%" height="260" style="border:0;display:block;"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            src="https://www.google.com/maps?q=Ilese-Ijebu,Ijebu-Ode,Ogun,Nigeria&output=embed">
+          </iframe>
+        </div>
+      </div>
+
+      <!-- Contact Form -->
+      <div class="card">
+        <h3 class="mb-8">Send Us a Message</h3>
+        <p class="mb-24" style="font-size:0.875rem;">Fill out the form below and our support team will respond within 24 hours.</p>
+
+        <form id="contact-form">
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="c-name">Full Name *</label>
+              <input type="text" id="c-name" class="form-control" placeholder="Your name" required/>
+            </div>
+            <div class="form-group">
+              <label for="c-email">Email Address *</label>
+              <input type="email" id="c-email" class="form-control" placeholder="you@example.com" required/>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="c-phone">Phone Number</label>
+              <input type="tel" id="c-phone" class="form-control" placeholder="+234 800 000 0000"/>
+            </div>
+            <div class="form-group">
+              <label for="c-subject">Subject *</label>
+              <select id="c-subject" class="form-control" required>
+                <option value="">Select a topic</option>
+                <option>General Inquiry</option>
+                <option>Technical Support</option>
+                <option>Clinic Partnership</option>
+                <option>Feedback / Suggestion</option>
+                <option>Report an Issue</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="c-message">Message *</label>
+            <textarea id="c-message" class="form-control" rows="5" placeholder="How can we help you?" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;">Send Message</button>
+        </form>
+
+        <!-- Success state -->
+        <div id="contact-success" style="display:none;flex-direction:column;align-items:center;text-align:center;padding:40px 0;gap:12px;">
+          <div style="font-size:3rem;">✅</div>
+          <h3>Message Sent!</h3>
+          <p style="max-width:340px;">Thanks for reaching out. Our support team will get back to you within 24 hours at the email address you provided.</p>
+          <a href="index.html" class="btn btn-primary mt-12">Back to Home</a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FAQ -->
+    <div class="section-header mt-48">
+      <div class="section-label">FAQ</div>
+      <h2>Frequently Asked Questions</h2>
+    </div>
+    <div style="max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:12px;">
+      <details class="card" style="cursor:pointer;">
+        <summary style="font-weight:700;font-size:0.95rem;cursor:pointer;">Is HomoDentHealth free to use?</summary>
+        <p class="mt-12">Yes — the symptom assessment and educational content are completely free. Some clinics may charge consultation fees for in-person visits booked through the platform.</p>
+      </details>
+      <details class="card" style="cursor:pointer;">
+        <summary style="font-weight:700;font-size:0.95rem;cursor:pointer;">Is this a replacement for seeing a dentist?</summary>
+        <p class="mt-12">No. HomoDentHealth is a preliminary triage and referral tool. All results should be confirmed by a licensed dental professional.</p>
+      </details>
+      <details class="card" style="cursor:pointer;">
+        <summary style="font-weight:700;font-size:0.95rem;cursor:pointer;">How is my health data protected?</summary>
+        <p class="mt-12">We use HTTPS encryption, password hashing, and role-based access controls. Your data is never shared with third parties without consent.</p>
+      </details>
+      <details class="card" style="cursor:pointer;">
+        <summary style="font-weight:700;font-size:0.95rem;cursor:pointer;">Can clinics partner with HomoDentHealth?</summary>
+        <p class="mt-12">Yes! Reach out via the "Clinic Partnership" subject in the form above and our team will contact you with onboarding details.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-disclaimer"><strong>Medical Disclaimer:</strong> Our support team cannot provide medical advice over chat, email, or phone. For dental concerns, use the Symptom Assessment tool or visit a licensed dentist.</div>
+    <div class="footer-grid">
+      <div class="footer-brand"><div class="footer-logo"><img src="images/logo.png" alt="HomoDentHealth" style="height:28px;object-fit:contain;" /></div><p>Nigeria's AI-assisted dental screening and referral platform.</p></div>
+      <div class="footer-col"><h4>Platform</h4><ul><li><a href="assessment.html">Symptom Checker</a></li><li><a href="clinics.html">Find Clinics</a></li><li><a href="appointment.html">Book Appointment</a></li></ul></div>
+      <div class="footer-col"><h4>Company</h4><ul><li><a href="about.html">About Us</a></li><li><a href="services.html">Services</a></li><li><a href="blog.html">Health Blog</a></li><li><a href="videos.html">Video Library</a></li></ul></div>
+      <div class="footer-col"><h4>Contact</h4><ul><li><a href="contact.html">Get in Touch</a></li><li><a href="privacy.html">Privacy Policy</a></li></ul></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 HomoDentHealth.</span></div>
+  </div>
+</footer>
+
+<!-- Live Chat Widget -->
+<button id="chat-bubble" aria-label="Open live chat">💬</button>
+<div id="chat-window">
+  <div class="chat-header">
+    <div>
+      <h4>HomoDentHealth Support</h4>
+      <span>● Online — typically replies instantly</span>
+    </div>
+    <button class="chat-close" id="chat-close">✕</button>
+  </div>
+  <div class="chat-body" id="chat-body">
+    <div class="chat-msg bot">👋 Hi! I'm the HomoDentHealth assistant. I can help with general questions about our platform. For dental symptoms, please use the <a href="assessment.html" style="color:var(--primary);font-weight:600;">Symptom Assessment</a> tool.</div>
+  </div>
+  <div class="chat-input-row">
+    <input type="text" id="chat-input" placeholder="Type a message..."/>
+    <button class="chat-send" id="chat-send">➤</button>
+  </div>
+</div>
+
+<!-- Feature 4: Socket.io replaces HTTP polling for real-time chat -->
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="config.js"></script>
+<script src="main.js"></script>
+<script>
+/* ============================================================
+   REAL-TIME LIVE CHAT — Socket.io (Feature 4)
+   Replaces the 4-second HTTP polling. Messages are now
+   instant with typing indicators and read receipts.
+   ============================================================ */
+const chatBubble = document.getElementById('chat-bubble');
+const chatWindow = document.getElementById('chat-window');
+const chatStatusEl = document.getElementById('chat-status');
+
+document.getElementById('chat-close').addEventListener('click', () => chatWindow.classList.remove('open'));
+chatBubble.addEventListener('click', () => {
+  chatWindow.classList.toggle('open');
+  if (chatWindow.classList.contains('open') && !socket) initChat();
+});
+
+let conversationId = null;
+let awaitingName = !currentUser();
+let socket = null;
+let typingTimeout = null;
+
+function appendMsg(text, who, isHtml = false) {
+  const body = document.getElementById('chat-body');
+  // Remove any typing indicator before adding real message
+  const typing = body.querySelector('.typing-indicator');
+  if (typing) typing.remove();
+  const el = document.createElement('div');
+  el.className = 'chat-msg ' + who;
+  if (isHtml) el.innerHTML = text;
+  else el.textContent = text;
+  body.appendChild(el);
+  body.scrollTop = body.scrollHeight;
+}
+
+function showTyping() {
+  const body = document.getElementById('chat-body');
+  if (body.querySelector('.typing-indicator')) return;
+  const el = document.createElement('div');
+  el.className = 'chat-msg bot typing-indicator';
+  el.style.cssText = 'opacity:.7;font-style:italic;font-size:.8rem;';
+  el.textContent = 'Agent is typing…';
+  body.appendChild(el);
+  body.scrollTop = body.scrollHeight;
+}
+
+function hideTyping() {
+  const body = document.getElementById('chat-body');
+  const el = body.querySelector('.typing-indicator');
+  if (el) el.remove();
+}
+
+async function ensureConversation(guestName) {
+  if (conversationId) return conversationId;
+  const res = await apiFetch('/api/chat/conversations', {
+    method: 'POST',
+    body: JSON.stringify({ subject: 'Contact page chat', guestName, category: 'general' })
+  });
+  conversationId = res.conversation._id;
+  return conversationId;
+}
+
+function initChat() {
+  const apiBase = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 'http://localhost:4000';
+  // Connect to Socket.io with auth token if available
+  const token = localStorage.getItem('hd_token') || localStorage.getItem('dc_token') || '';
+  socket = io(apiBase, {
+    auth: token ? { token } : {},
+    transports: ['websocket', 'polling']
+  });
+
+  socket.on('connect', () => {
+    if (chatStatusEl) { chatStatusEl.textContent = 'Online'; chatStatusEl.style.color = '#a7f3d0'; }
+  });
+  socket.on('disconnect', () => {
+    if (chatStatusEl) { chatStatusEl.textContent = 'Reconnecting…'; chatStatusEl.style.color = '#fde68a'; }
+  });
+
+  // Agent replied
+  socket.on('new-message', (msg) => {
+    if (msg.senderRole === 'admin' || msg.senderRole === 'agent') {
+      hideTyping();
+      appendMsg(msg.content, 'bot');
+    }
+  });
+
+  // Typing indicator from agent
+  socket.on('typing', ({ userId }) => { showTyping(); });
+  socket.on('stop-typing', () => { hideTyping(); });
+
+  // Join conversation room once we have an ID
+  if (conversationId) socket.emit('join-chat', { conversationId });
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  if (awaitingName) {
+    appendMsg(text, 'user');
+    awaitingName = false;
+    try {
+      await ensureConversation(text);
+      appendMsg(`Thanks, ${text}! What can we help you with?`, 'bot');
+      if (socket) socket.emit('join-chat', { conversationId });
+    } catch (e) {
+      appendMsg('Sorry, the chat is temporarily unavailable. Please use the contact form above instead.', 'bot');
+    }
+    return;
+  }
+
+  appendMsg(text, 'user');
+
+  // Emergency safety auto-reply
+  const lower = text.toLowerCase();
+  if (lower.includes('emergency') || lower.includes("can't breathe") || lower.includes('severe bleeding')) {
+    appendMsg('🚨 If this is a dental emergency, please call 112 or go to the nearest hospital ER immediately.', 'bot');
+  }
+
+  try {
+    const user = currentUser();
+    await ensureConversation(user ? undefined : 'Website Visitor');
+    // Send via Socket.io (instant) with REST API fallback
+    if (socket && socket.connected) {
+      socket.emit('send-message', { conversationId, content: text });
+    } else {
+      await apiFetch(`/api/chat/conversations/${conversationId}/messages`, {
+        method: 'POST', body: JSON.stringify({ content: text })
+      });
+    }
+    // Emit stop-typing when message is sent
+    if (socket) socket.emit('stop-typing', { conversationId });
+  } catch (e) {
+    appendMsg("Sorry, that message couldn't be sent. Please try the contact form instead.", 'bot');
+  }
+}
+
+// Emit typing event as user types
+document.getElementById('chat-input').addEventListener('input', () => {
+  if (!socket || !conversationId) return;
+  socket.emit('typing', { conversationId });
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => {
+    if (socket) socket.emit('stop-typing', { conversationId });
+  }, 1500);
+});
+
+document.getElementById('chat-send').addEventListener('click', sendMessage);
+document.getElementById('chat-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+
+// Welcome message
+if (!awaitingName) {
+  appendMsg("You're signed in! A support agent can see your account details. What can we help you with?", 'bot');
+  // Auto-init chat for logged-in users so they get instant replies
+  setTimeout(initChat, 300);
+} else {
+  appendMsg("Hi! I'm the HomoDentHealth support chat. First, what's your name?", 'bot');
+}
+</script>
+</body>
+</html>
+

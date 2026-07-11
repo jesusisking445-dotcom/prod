@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Book an Appointment — HomoDentHealth</title>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+/* ── Step indicators ──────────────────────────────────── */
+.appt-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 36px;
+}
+.appt-step-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  z-index: 1;
+}
+.appt-step-node .node-circle {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s;
+  border: 2px solid var(--border);
+}
+.appt-step-node.done .node-circle  { background: var(--secondary); border-color: var(--secondary); color: white; }
+.appt-step-node.active .node-circle{ background: var(--primary);   border-color: var(--primary);   color: white; box-shadow: 0 0 0 4px rgba(10,92,102,0.15); }
+.appt-step-node .node-label {
+  font-size: 0.72rem; font-weight: 600;
+  color: var(--text-muted); text-align: center;
+  white-space: nowrap; transition: color 0.3s;
+}
+.appt-step-node.active .node-label { color: var(--primary); }
+.appt-step-node.done .node-label   { color: var(--secondary); }
+.appt-step-line {
+  flex: 1; height: 2px;
+  background: var(--border);
+  margin: 0 8px;
+  margin-bottom: 22px;
+  transition: background 0.3s;
+  max-width: 100px;
+}
+.appt-step-line.done { background: var(--secondary); }
+
+/* ── Clinic selection cards ───────────────────────────── */
+.clinic-select-card {
+  display: flex; gap: 16px; align-items: flex-start;
+  padding: 18px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.22s;
+  background: white;
+}
+.clinic-select-card:hover { border-color: var(--secondary); box-shadow: var(--shadow-sm); }
+.clinic-select-card.selected { border-color: var(--primary); background: var(--light-teal); }
+.clinic-select-card .cs-radio {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 2px; transition: all 0.2s;
+}
+.clinic-select-card.selected .cs-radio { border-color: var(--primary); background: var(--primary); }
+.clinic-select-card.selected .cs-radio::after {
+  content: ''; width: 8px; height: 8px;
+  border-radius: 50%; background: white;
+}
+.clinic-select-card .cs-body { flex: 1; }
+.clinic-select-card .cs-name { font-family: var(--font-display); font-weight: 700; font-size: 0.95rem; margin-bottom: 3px; }
+.clinic-select-card .cs-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* ── Calendar ─────────────────────────────────────────── */
+.calendar-wrap { user-select: none; }
+.cal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.cal-header h4 { font-size: 1rem; }
+.cal-nav {
+  width: 34px; height: 34px; border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: white; font-size: 1rem; color: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s;
+}
+.cal-nav:hover { background: var(--light-teal); border-color: var(--secondary); }
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cal-day-label {
+  text-align: center; padding: 6px 0;
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--text-muted); text-transform: uppercase;
+}
+.cal-day {
+  aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.18s;
+  color: var(--text);
+  border: 1.5px solid transparent;
+}
+.cal-day:hover:not(.disabled):not(.empty) { background: var(--light-teal); border-color: var(--border); }
+.cal-day.today { font-weight: 700; color: var(--primary); border-color: var(--border); }
+.cal-day.selected { background: var(--primary); color: white; border-color: var(--primary); font-weight: 700; }
+.cal-day.disabled { color: var(--border); cursor: not-allowed; }
+.cal-day.empty { cursor: default; }
+
+/* ── Time slots ───────────────────────────────────────── */
+.time-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+.time-slot {
+  padding: 10px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  text-align: center;
+  font-size: 0.82rem; font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer; transition: all 0.18s;
+  background: white;
+}
+.time-slot:hover:not(.taken) { border-color: var(--secondary); color: var(--primary); background: var(--light-teal); }
+.time-slot.selected { background: var(--primary); border-color: var(--primary); color: white; }
+.time-slot.taken { background: var(--bg); border-color: var(--border); color: var(--border); cursor: not-allowed; text-decoration: line-through; }
+
+/* ── Review summary card ──────────────────────────────── */
+.review-row {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 12px 0; border-bottom: 1px solid #F0F7F7;
+  gap: 16px;
+}
+.review-row:last-child { border-bottom: none; }
+.review-row .rv-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; flex-shrink: 0; }
+.review-row .rv-value { font-size: 0.875rem; font-weight: 600; color: var(--text); text-align: right; }
+
+/* ── Dentist selector chips ───────────────────────────── */
+.dentist-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.dentist-chip {
+  padding: 8px 14px; border: 1.5px solid var(--border); border-radius: 100px;
+  font-size: 0.82rem; font-weight: 600; color: var(--text-muted);
+  cursor: pointer; transition: all 0.2s; background: white;
+}
+.dentist-chip:hover { border-color: var(--secondary); color: var(--primary); background: var(--light-teal); }
+.dentist-chip.selected { border-color: var(--primary); background: var(--light-teal); color: var(--primary); }
+
+/* ── Confirmation modal ───────────────────────────────── */
+.confirm-modal-inner {
+  background: white;
+  border-radius: var(--radius-xl);
+  padding: 0;
+  max-width: 460px; width: 100%;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  animation: modalIn 0.28s ease;
+}
+@keyframes modalIn { from { opacity:0; transform: scale(0.94) translateY(12px); } to { opacity:1; transform:none; } }
+.confirm-modal-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  padding: 28px 32px;
+  text-align: center;
+}
+.confirm-modal-header .tick {
+  width: 64px; height: 64px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.35);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem;
+  margin: 0 auto 14px;
+}
+.confirm-modal-header h3 { color: white; font-size: 1.3rem; }
+.confirm-modal-header p  { color: rgba(255,255,255,0.8); font-size: 0.875rem; margin-top: 4px; }
+.confirm-modal-body { padding: 24px 32px 32px; }
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 768px) {
+  .appt-step-line { max-width: 40px; }
+  .appt-step-node .node-label { display: none; }
+  .time-slots { grid-template-columns: repeat(3, 1fr); }
+  .cal-day { font-size: 0.8rem; }
+  .review-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .review-row .rv-value { text-align: left; }
+  .clinic-select-card { flex-direction: column; gap: 10px; }
+  .confirm-modal-body { padding: 20px 24px 24px; }
+}
+
+@media (max-width: 480px) {
+  .appt-steps { gap: 8px; }
+  .appt-step-line { display: none; }
+  .time-slots { grid-template-columns: repeat(2, 1fr); }
+  .dentist-chips { gap: 6px; }
+  .dentist-chip { width: 100%; text-align: center; }
+  .confirm-modal-header { padding: 24px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAVBAR ─────────────────────────────────────────── -->
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="nav-logo"><img src="images/logo.png" alt="HomoDentHealth" class="nav-logo-img" /></a>
+      HomoDentHealth
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Home</a><a href="about.html">About</a>
+      <a href="services.html">Services</a><a href="clinics.html">Find Clinics</a>
+      <a href="blog.html">Health Blog</a><a href="videos.html">Videos</a><a href="contact.html">Contact</a>
+    </div>
+    <div class="nav-actions">
+      <a href="auth.html" class="btn btn-secondary btn-sm">Login</a>
+      <a href="auth.html" class="btn btn-primary btn-sm">Register</a>
+    </div>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html">Home</a><a href="about.html">About</a>
+    <a href="clinics.html">Find Clinics</a><a href="contact.html">Contact</a>
+    <div class="m-actions">
+      <a href="auth.html" class="btn btn-secondary btn-sm">Login</a>
+      <a href="auth.html" class="btn btn-primary btn-sm">Register</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── PAGE HEADER ────────────────────────────────────── -->
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="index.html">Home</a> ›
+    <a href="clinics.html">Find Clinics</a> › Book Appointment
+  </div>
+  <h1>Book an Appointment</h1>
+  <p>Choose a clinic, pick a convenient date and time, and confirm your booking in under two minutes.</p>
+</div>
+
+<!-- ── MAIN CONTENT ───────────────────────────────────── -->
+<section style="background:var(--bg);">
+  <div class="container" style="max-width:820px;">
+
+    <!-- Guest warning (hidden if logged in) -->
+    <div class="alert alert-warning mb-24" id="guest-warning">
+      <span class="alert-icon">⚠️</span>
+      <div>
+        <strong>You're not logged in.</strong> You can still book as a guest, but creating a
+        <a href="auth.html?redirect=appointment.html" class="fw-600" style="color:var(--primary);">free account</a>
+        lets you manage bookings, get reminders, and see your history.
+      </div>
+    </div>
+
+    <!-- Step indicators -->
+    <div class="appt-steps">
+      <div class="appt-step-node active" id="stepnode-1">
+        <div class="node-circle" id="nc-1">1</div>
+        <div class="node-label">Clinic</div>
+      </div>
+      <div class="appt-step-line" id="line-1"></div>
+      <div class="appt-step-node" id="stepnode-2">
+        <div class="node-circle" id="nc-2">2</div>
+        <div class="node-label">Date &amp; Time</div>
+      </div>
+      <div class="appt-step-line" id="line-2"></div>
+      <div class="appt-step-node" id="stepnode-3">
+        <div class="node-circle" id="nc-3">3</div>
+        <div class="node-label">Review &amp; Confirm</div>
+      </div>
+    </div>
+
+    <!-- ───────────────────────────────────────────────────
+         STEP 1 — Choose Clinic
+    ─────────────────────────────────────────────────────── -->
+    <div class="wizard-step active" id="appt-step-1">
+      <div class="card">
+        <div class="section-label">Step 1 of 3</div>
+        <h3 style="margin-top:6px;margin-bottom:4px;">Choose a clinic</h3>
+        <p style="font-size:0.875rem;margin-bottom:20px;">Select the dental clinic you'd like to visit, or search for one nearby.</p>
+
+        <!-- Search + filter -->
+        <div class="flex-center gap-12 mb-20" style="flex-wrap:wrap;">
+          <input type="text" id="clinic-filter-input" class="form-control" placeholder="🔍 Search clinics by name or area…" style="flex:2;min-width:200px;" oninput="filterClinics(this.value)"/>
+          <select id="clinic-filter-specialty" class="form-control" style="flex:1;min-width:160px;" onchange="filterClinics()">
+            <option value="">All Specialties</option>
+            <option value="general">General Dentistry</option>
+            <option value="orthodontics">Orthodontics</option>
+            <option value="periodontics">Periodontics</option>
+            <option value="pediatric_dentistry">Pediatric Dentistry</option>
+            <option value="oral_surgery">Oral Surgery</option>
+          </select>
+        </div>
+
+        <div id="clinic-select-list" style="display:flex;flex-direction:column;gap:12px;">
+          <!-- Injected by JS -->
+        </div>
+        <div id="err-clinic" class="form-error mt-8">Please select a clinic to continue.</div>
+
+        <div class="wizard-nav mt-32">
+          <a href="clinics.html" class="btn btn-ghost">← Back to Directory</a>
+          <button class="btn btn-primary btn-lg" onclick="goToStep(2)">Next: Choose Date &amp; Time →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────────────────────────────────────────────────
+         STEP 2 — Date & Time
+    ─────────────────────────────────────────────────────── -->
+    <div class="wizard-step" id="appt-step-2">
+      <div class="card">
+        <div class="section-label">Step 2 of 3</div>
+        <h3 style="margin-top:6px;margin-bottom:4px;">Pick a date &amp; time</h3>
+        <p style="font-size:0.875rem;margin-bottom:20px;">Select any available date (shown below) and a convenient time slot.</p>
+
+        <div class="grid-2" style="gap:32px;align-items:flex-start;">
+          <!-- Calendar -->
+          <div class="calendar-wrap">
+            <div class="cal-header">
+              <button class="cal-nav" id="cal-prev" onclick="changeMonth(-1)" aria-label="Previous month">◀</button>
+              <h4 id="cal-month-label">June 2026</h4>
+              <button class="cal-nav" id="cal-next" onclick="changeMonth(1)" aria-label="Next month">▶</button>
+            </div>
+            <div class="cal-grid" id="cal-grid">
+              <!-- Injected by JS -->
+            </div>
+          </div>
+
+          <!-- Time slots -->
+          <div>
+            <div style="font-weight:700;font-size:0.875rem;margin-bottom:4px;">Available times</div>
+            <div id="selected-date-label" style="font-size:0.82rem;color:var(--text-muted);margin-bottom:10px;">← Select a date first</div>
+            <div class="time-slots" id="time-slots-grid">
+              <!-- Injected by JS after date is selected -->
+            </div>
+            <div id="err-time" class="form-error mt-8">Please select a time slot.</div>
+          </div>
+        </div>
+
+        <div class="wizard-nav mt-32">
+          <button class="btn btn-secondary btn-lg" onclick="goToStep(1)">← Back</button>
+          <button class="btn btn-primary btn-lg" onclick="goToStep(3)">Next: Review &amp; Confirm →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────────────────────────────────────────────────
+         STEP 3 — Review & Confirm
+    ─────────────────────────────────────────────────────── -->
+    <div class="wizard-step" id="appt-step-3">
+      <div class="card">
+        <div class="section-label">Step 3 of 3</div>
+        <h3 style="margin-top:6px;margin-bottom:20px;">Review &amp; confirm your booking</h3>
+
+        <!-- Appointment summary -->
+        <div style="background:var(--light-teal);border-radius:var(--radius-lg);padding:20px 22px;margin-bottom:24px;border:1px solid var(--border);">
+          <div class="flex-between mb-12">
+            <div class="section-label" style="margin-bottom:0;">Booking Summary</div>
+            <button onclick="goToStep(1)" style="font-size:0.78rem;color:var(--primary);background:none;border:none;cursor:pointer;font-weight:600;">Edit</button>
+          </div>
+          <div class="review-row">
+            <span class="rv-label">🏥 Clinic</span>
+            <span class="rv-value" id="rv-clinic">—</span>
+          </div>
+          <div class="review-row">
+            <span class="rv-label">📍 Address</span>
+            <span class="rv-value" id="rv-address">—</span>
+          </div>
+          <div class="review-row">
+            <span class="rv-label">📅 Date</span>
+            <span class="rv-value" id="rv-date">—</span>
+          </div>
+          <div class="review-row">
+            <span class="rv-label">⏰ Time</span>
+            <span class="rv-value" id="rv-time">—</span>
+          </div>
+          <div class="review-row">
+            <span class="rv-label">⚕️ Urgency</span>
+            <span class="rv-value" id="rv-urgency">—</span>
+          </div>
+        </div>
+
+        <!-- Patient details -->
+        <h4 style="margin-bottom:14px;">Your details</h4>
+        <div class="grid-2" style="gap:14px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="pat-name">Full Name *</label>
+            <input type="text" id="pat-name" class="form-control" placeholder="Amaka Obi"/>
+            <div class="form-error" id="err-pat-name"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="pat-phone">Phone Number *</label>
+            <input type="tel" id="pat-phone" class="form-control" placeholder="+234 800 000 0000"/>
+            <div class="form-error" id="err-pat-phone"></div>
+          </div>
+        </div>
+        <div class="form-group mt-16">
+          <label for="pat-email">Email Address *</label>
+          <input type="email" id="pat-email" class="form-control" placeholder="yourname@example.com"/>
+          <div class="form-error" id="err-pat-email"></div>
+        </div>
+
+        <!-- Preferred dentist -->
+        <div class="form-group mt-4">
+          <label>Preferred dentist <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+          <div class="dentist-chips" id="dentist-chips">
+            <div class="dentist-chip selected" data-val="">No preference</div>
+            <div class="dentist-chip" data-val="dr-adeyemi">Dr. Adeyemi</div>
+            <div class="dentist-chip" data-val="dr-ibrahim">Dr. Ibrahim</div>
+            <div class="dentist-chip" data-val="dr-nwosu">Dr. Nwosu</div>
+          </div>
+          <input type="hidden" id="preferred-dentist" value=""/>
+        </div>
+
+        <div class="form-group mt-16">
+          <label for="pat-notes">Notes for the dentist <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+          <textarea id="pat-notes" class="form-control" rows="3" placeholder="Describe your main concern or mention any allergies/conditions…"></textarea>
+        </div>
+
+        <!-- Reminders -->
+        <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;">
+          <div style="font-weight:700;font-size:0.875rem;margin-bottom:10px;">📣 Appointment reminders</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.875rem;color:var(--text);">
+              <input type="checkbox" id="remind-email" checked style="width:16px;height:16px;accent-color:var(--primary);"/> Email reminder (24 hours before)
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.875rem;color:var(--text);">
+              <input type="checkbox" id="remind-sms" checked style="width:16px;height:16px;accent-color:var(--primary);"/> SMS reminder (2 hours before)
+            </label>
+          </div>
+        </div>
+
+        <!-- Cancellation note -->
+        <div class="alert alert-info mb-20">
+          <span class="alert-icon">ℹ️</span>
+          <div style="font-size:0.82rem;">You can reschedule or cancel your appointment up to <strong>4 hours before</strong> the scheduled time, free of charge, from your Patient Dashboard.</div>
+        </div>
+
+        <div class="form-error mb-8" id="err-booking" style="font-size:0.875rem;"></div>
+
+        <div class="wizard-nav">
+          <button class="btn btn-secondary btn-lg" onclick="goToStep(2)">← Back</button>
+          <button class="btn btn-accent btn-lg" id="btn-confirm" onclick="confirmBooking()">
+            <span id="confirm-btn-text">✓ Confirm Booking</span>
+            <span id="confirm-spinner" style="display:none;width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;"></span>
+          </button>
+        </div>
+        <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+</section>
+
+<!-- ── CONFIRMATION MODAL ──────────────────────────────── -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="confirm-modal-inner">
+    <div class="confirm-modal-header">
+      <div class="tick">✅</div>
+      <h3>Appointment Confirmed!</h3>
+      <p>Your booking has been sent to the clinic. Check your email for confirmation.</p>
+    </div>
+    <div class="confirm-modal-body">
+      <div id="modal-summary" style="margin-bottom:24px;"></div>
+
+      <div style="background:var(--light-teal);border-radius:var(--radius);padding:14px 16px;font-size:0.82rem;color:var(--primary);margin-bottom:20px;line-height:1.6;">
+        <strong>What happens next?</strong><br>
+        The clinic will confirm your booking within 2 hours. You'll receive an email and SMS reminder before your visit. You can manage this appointment from your Patient Dashboard.
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a href="dashboard.html" class="btn btn-primary" style="flex:1;justify-content:center;">Go to My Dashboard</a>
+        <button onclick="bookAnother()" class="btn btn-secondary" style="flex:1;justify-content:center;">Book Another</button>
+      </div>
+      <div style="text-align:center;margin-top:12px;">
+        <button onclick="window.print()" style="background:none;border:none;font-size:0.82rem;color:var(--text-muted);cursor:pointer;text-decoration:underline;">🖨 Print confirmation</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FOOTER ─────────────────────────────────────────── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-disclaimer"><strong>Booking Notice:</strong> HomoDentHealth connects patients with partner clinics. Appointment confirmation is subject to clinic availability. Always call the clinic if you have an urgent concern.</div>
+    <div class="footer-grid">
+      <div class="footer-brand"><div class="footer-logo"><img src="images/logo.png" alt="HomoDentHealth" style="height:28px;object-fit:contain;" /></div><p>Nigeria's AI-assisted dental screening and referral platform.</p></div>
+      <div class="footer-col"><h4>Platform</h4><ul><li><a href="assessment.html">Symptom Checker</a></li><li><a href="clinics.html">Find Clinics</a></li><li><a href="dashboard.html">My Dashboard</a></li></ul></div>
+      <div class="footer-col"><h4>Company</h4><ul><li><a href="about.html">About Us</a></li><li><a href="services.html">Services</a></li><li><a href="blog.html">Health Blog</a></li><li><a href="videos.html">Video Library</a></li></ul></div>
+      <div class="footer-col"><h4>Help</h4><ul><li><a href="contact.html">Contact Us</a></li><li><a href="privacy.html">Privacy Policy</a></li><li><a href="terms.html">Terms</a></li></ul></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 HomoDentHealth.</span><span>Student project — not for commercial medical use.</span></div>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="main.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════
+  HomoDentHealth — Appointment Page
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Booking state ───────────────────────────────────── */
+const booking = {
+  clinicId: null, clinicName: '', clinicAddress: '',
+  date: null, dateLabel: '', time: '', referralId: null,
+};
+
+/* ── Clinic data — fetched from the backend ───────────── */
+let CLINICS = [];
+
+function formatHoursToday(hours) {
+  if (!hours) return '';
+  const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  const today = days[new Date().getDay()];
+  const h = hours[today];
+  if (!h || !h.open) return 'Closed today';
+  return `Today ${h.open}–${h.close}`;
+}
+
+async function fetchClinics() {
+  const wrap = document.getElementById('clinic-select-list');
+  wrap.innerHTML = `<div class="card text-center" style="padding:28px;"><p>Loading clinics…</p></div>`;
+  try {
+    const res = await apiFetch('/api/clinic?limit=50');
+    CLINICS = (res.clinics || []).map(c => ({
+      id: c._id,
+      name: c.name,
+      address: `${c.location?.address || ''}, ${c.location?.city || ''}`,
+      rating: c.ratings?.averageRating || 0,
+      hours: formatHoursToday(c.hours),
+      emergency: !!c.emergencyAvailable,
+      specialty: (c.specialties && c.specialties[0]) || 'general',
+      city: c.location?.city || '',
+      icon: c.emergencyAvailable ? '⚕️' : '🏥'
+    }));
+    renderClinics(CLINICS);
+    applyPreselectedClinic();
+  } catch (e) {
+    wrap.innerHTML = `<div class="alert alert-warning"><span class="alert-icon">⚠️</span><div>Couldn't load clinics right now. Please refresh the page.</div></div>`;
+  }
+}
+
+/* ── Check if user is already logged in ─────────────── */
+let preselectClinicId = null;
+(function checkAuth() {
+  const user = currentUser();
+  if (user) {
+    document.getElementById('guest-warning').style.display = 'none';
+    document.getElementById('pat-name').value  = user.fullName || '';
+    document.getElementById('pat-email').value = user.email || '';
+    document.getElementById('pat-phone').value = user.phone || '';
+  }
+  // Pre-select clinic from query param ?clinic=ID (from clinics.html / results.html)
+  const params = new URLSearchParams(location.search);
+  preselectClinicId = params.get('clinic');
+  const preReferral = params.get('referralId') || params.get('referral');
+  if (preReferral) booking.referralId = preReferral;
+})();
+
+function applyPreselectedClinic() {
+  if (!preselectClinicId) return;
+  const c = CLINICS.find(cl => cl.id === preselectClinicId);
+  if (c) selectClinic(c.id, false);
+}
+
+/* ── Render clinic cards ────────────────────────────── */
+function renderClinics(list) {
+  const wrap = document.getElementById('clinic-select-list');
+  if (!list.length) {
+    wrap.innerHTML = `<div class="card text-center" style="padding:28px;"><p>No clinics match your filter. Try clearing the search.</p></div>`;
+    return;
+  }
+  wrap.innerHTML = list.map(c => `
+    <div class="clinic-select-card ${booking.clinicId === c.id ? 'selected' : ''}"
+         id="csc-${c.id}" onclick="selectClinic('${c.id}')">
+      <div class="cs-radio"></div>
+      <div style="font-size:1.6rem;flex-shrink:0;">${c.icon}</div>
+      <div class="cs-body">
+        <div class="cs-name">${c.name}</div>
+        <div class="cs-meta">
+          <span>📍 ${c.address}</span>
+        </div>
+        <div class="cs-meta">
+          <span>⭐ ${c.rating.toFixed(1)}</span>
+          <span>🕐 ${c.hours}</span>
+          ${c.emergency ? '<span class="badge badge-severe" style="font-size:0.7rem;padding:2px 8px;">24/7 Emergency</span>' : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterClinics(query) {
+  const q = (query || document.getElementById('clinic-filter-input').value || '').toLowerCase();
+  const sp = document.getElementById('clinic-filter-specialty').value;
+  const filtered = CLINICS.filter(c =>
+    (c.name.toLowerCase().includes(q) || c.address.toLowerCase().includes(q) || c.city.toLowerCase().includes(q)) &&
+    (!sp || c.specialty === sp)
+  );
+  renderClinics(filtered);
+}
+
+function selectClinic(id, scrollToNext = true) {
+  const clinic = CLINICS.find(c => c.id === id);
+  // Feature 7: Load real availability for the selected clinic
+  setTimeout(() => loadClinicAvailability(), 0);
+  if (!clinic) return;
+  booking.clinicId = id;
+  booking.clinicName    = clinic.name;
+  booking.clinicAddress = clinic.address;
+  document.getElementById('err-clinic').style.display = 'none';
+  document.querySelectorAll('.clinic-select-card').forEach(el => el.classList.remove('selected'));
+  const card = document.getElementById('csc-' + id);
+  if (card) card.classList.add('selected');
+  loadDentistChips(id);
+}
+
+async function loadDentistChips(clinicId) {
+  const wrap = document.getElementById('dentist-chips');
+  wrap.innerHTML = `<div class="dentist-chip selected" data-val="">No preference</div>`;
+  document.getElementById('preferred-dentist').value = '';
+  try {
+    const res = await apiFetch(`/api/clinic/${clinicId}`);
+    const staff = (res.clinic.staff || []).filter(s => s.role === 'dentist' || !s.role);
+    if (staff.length) {
+      wrap.innerHTML += staff.map(d => `<div class="dentist-chip" data-val="${d._id}">Dr. ${d.firstName} ${d.lastName}</div>`).join('');
+    }
+    wrap.querySelectorAll('.dentist-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        wrap.querySelectorAll('.dentist-chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        document.getElementById('preferred-dentist').value = chip.dataset.val;
+      });
+    });
+  } catch (e) { /* clinic has no listed dentists yet — "No preference" still works */ }
+}
+
+fetchClinics();
+
+/* ══════════════════════════════════════════
+   CALENDAR
+══════════════════════════════════════════ */
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+const today  = new Date();
+today.setHours(0,0,0,0);
+
+// Feature 7: Per-clinic unavailable days loaded from /api/clinic/:id/availability
+// Falls back to [0] (Sunday only) if the API is unreachable.
+let UNAVAILABLE_DAYS = [0];
+let clinicHours = null; // { monday: { open:'08:00', close:'18:00' }, ... }
+
+async function loadClinicAvailability() {
+  if (!booking.clinicId) return;
+  try {
+    const res = await apiFetch(`/api/clinic/${booking.clinicId}/availability`);
+    const hours = res.availability || res.hours || res.clinic?.hours || {};
+    clinicHours = hours;
+    const DAY_NAMES = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    UNAVAILABLE_DAYS = DAY_NAMES.reduce((acc, name, idx) => {
+      const h = hours[name];
+      if (!h || !h.open || h.open === 'closed') acc.push(idx);
+      return acc;
+    }, []);
+    // Refresh calendar with real availability
+    renderCalendar();
+  } catch (e) {
+    // Keep default [0] (Sunday closed) if fetch fails
+    renderCalendar();
+  }
+}
+
+function renderCalendar() {
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DAYS   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  document.getElementById('cal-month-label').textContent = `${MONTHS[calMonth]} ${calYear}`;
+
+  const firstDay  = new Date(calYear, calMonth, 1).getDay();
+  const daysInMon = new Date(calYear, calMonth + 1, 0).getDate();
+  const grid = document.getElementById('cal-grid');
+
+  let html = DAYS.map(d => `<div class="cal-day-label">${d}</div>`).join('');
+
+  for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
+
+  for (let d = 1; d <= daysInMon; d++) {
+    const date = new Date(calYear, calMonth, d);
+    date.setHours(0,0,0,0);
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isPast       = date < today;
+    const isUnavailable= UNAVAILABLE_DAYS.includes(date.getDay());
+    const isToday      = date.getTime() === today.getTime();
+    const isSelected   = booking.date === dateStr;
+
+    let cls = 'cal-day';
+    if (isPast || isUnavailable) cls += ' disabled';
+    else if (isToday)    cls += ' today';
+    if (isSelected)      cls += ' selected';
+
+    const clickable = !isPast && !isUnavailable;
+    html += `<div class="${cls}" ${clickable ? `onclick="selectDate('${dateStr}', ${d})"` : ''} title="${isUnavailable?'Clinic closed':''}">${d}</div>`;
+  }
+
+  grid.innerHTML = html;
+}
+
+function changeMonth(dir) {
+  calMonth += dir;
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0;  calYear++; }
+  const now = new Date();
+  if (calYear < now.getFullYear() || (calYear === now.getFullYear() && calMonth < now.getMonth())) {
+    calYear = now.getFullYear(); calMonth = now.getMonth();
+  }
+  renderCalendar();
+}
+
+function selectDate(dateStr, day) {
+  booking.date = dateStr;
+  const d = new Date(dateStr + 'T00:00:00');
+  booking.dateLabel = d.toLocaleDateString('en-NG', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  document.getElementById('selected-date-label').textContent = `Slots for ${booking.dateLabel}`;
+  booking.time = '';
+  document.getElementById('err-time').style.display = 'none';
+  renderCalendar();
+  renderTimeSlots(dateStr);
+}
+
+/* ══════════════════════════════════════════
+   TIME SLOTS — real availability from the backend
+══════════════════════════════════════════ */
+const ALL_SLOTS = ['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30',
+                   '12:00','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
+
+async function renderTimeSlots(dateStr) {
+  const wrap = document.getElementById('time-slots-grid');
+  wrap.innerHTML = `<p style="grid-column:1/-1;">Checking availability…</p>`;
+
+  let taken = [];
+  try {
+    const res = await apiFetch(`/api/appointment/taken-slots?clinicId=${booking.clinicId}&date=${dateStr}`);
+    taken = res.taken || [];
+  } catch (e) { /* if this fails, show all slots open rather than blocking booking */ }
+
+  wrap.innerHTML = ALL_SLOTS.map(t => {
+    const isTaken = taken.includes(t);
+    const isSelected = booking.time === t;
+    const hour = parseInt(t.split(':')[0]);
+    const display = hour < 12 ? `${t} AM` : (hour === 12 ? `${t} PM` : `${String(hour-12).padStart(2,'0')}:${t.split(':')[1]} PM`);
+    return `<div class="time-slot ${isTaken?'taken':''} ${isSelected?'selected':''}" 
+                 ${!isTaken?`onclick="selectTime('${t}', this)"`:''}
+                 title="${isTaken?'Already booked':''}">
+                ${display}${isTaken?' ✕':''}
+            </div>`;
+  }).join('');
+}
+
+function selectTime(time, el) {
+  booking.time = time;
+  document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('err-time').style.display = 'none';
+}
+
+renderCalendar();
+
+/* ══════════════════════════════════════════
+   STEP NAVIGATION
+══════════════════════════════════════════ */
+function goToStep(n) {
+  if (n > 1 && !booking.clinicId) {
+    document.getElementById('err-clinic').style.display = 'block';
+    document.getElementById('err-clinic').scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+  if (n > 2) {
+    if (!booking.date) {
+      document.getElementById('err-time').textContent = 'Please select a date.';
+      document.getElementById('err-time').style.display = 'block';
+      return;
+    }
+    if (!booking.time) {
+      document.getElementById('err-time').textContent = 'Please select a time slot.';
+      document.getElementById('err-time').style.display = 'block';
+      return;
+    }
+    populateReview();
+  }
+
+  document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('appt-step-' + n).classList.add('active');
+
+  [1,2,3].forEach(i => {
+    const node = document.getElementById('stepnode-' + i);
+    const circle = document.getElementById('nc-' + i);
+    node.className = 'appt-step-node' + (i < n ? ' done' : i === n ? ' active' : '');
+    circle.textContent = i < n ? '✓' : String(i);
+  });
+  if (document.getElementById('line-1')) {
+    document.getElementById('line-1').className = 'appt-step-line' + (n >= 2 ? ' done' : '');
+    document.getElementById('line-2').className = 'appt-step-line' + (n >= 3 ? ' done' : '');
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function populateReview() {
+  const lastAssessment = Store.load('assessment');
+  const urgencyMap = { mild:'✅ Mild', moderate:'🔶 Moderate', severe:'⚠️ Urgent', emergency:'🚨 Emergency' };
+  const urgency = lastAssessment?.result?.level
+    ? (urgencyMap[lastAssessment.result.level] || 'Routine Visit')
+    : 'Routine Visit / Self-referred';
+
+  document.getElementById('rv-clinic').textContent   = booking.clinicName;
+  document.getElementById('rv-address').textContent  = booking.clinicAddress;
+  document.getElementById('rv-date').textContent     = booking.dateLabel;
+  document.getElementById('rv-time').textContent     = formatTime(booking.time);
+  document.getElementById('rv-urgency').textContent  = urgency;
+
+  const user = currentUser();
+  if (user) {
+    if (!document.getElementById('pat-name').value)  document.getElementById('pat-name').value  = user.fullName || '';
+    if (!document.getElementById('pat-email').value) document.getElementById('pat-email').value = user.email || '';
+  }
+}
+
+function formatTime(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':').map(Number);
+  const suffix = h < 12 ? 'AM' : 'PM';
+  const h12 = h % 12 || 12;
+  return `${String(h12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${suffix}`;
+}
+
+/* ══════════════════════════════════════════
+   CONFIRM BOOKING
+══════════════════════════════════════════ */
+async function confirmBooking() {
+  const name    = document.getElementById('pat-name').value.trim();
+  const phone   = document.getElementById('pat-phone').value.trim();
+  const email   = document.getElementById('pat-email').value.trim();
+  let valid = true;
+
+  ['err-pat-name','err-pat-phone','err-pat-email'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+
+  function showE(id, msg) {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = msg; el.style.display = 'block'; }
+  }
+
+  if (!name)  { showE('err-pat-name',  'Please enter your name.');         valid = false; }
+  if (!phone) { showE('err-pat-phone', 'Please enter your phone number.'); valid = false; }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showE('err-pat-email', 'Please enter a valid email address.'); valid = false;
+  }
+  if (!valid) return;
+
+  const btnText    = document.getElementById('confirm-btn-text');
+  const spinner    = document.getElementById('confirm-spinner');
+  const btn        = document.getElementById('btn-confirm');
+  btnText.style.display = 'none'; spinner.style.display = 'inline-block'; btn.disabled = true;
+  document.getElementById('err-booking').style.display = 'none';
+
+  const notes          = document.getElementById('pat-notes').value.trim();
+  const preferredDentist = document.getElementById('preferred-dentist').value;
+  const remindEmail    = document.getElementById('remind-email').checked;
+  const remindSms      = document.getElementById('remind-sms').checked;
+
+  try {
+    const data = await apiFetch('/api/appointment', {
+      method: 'POST',
+      body: JSON.stringify({
+        clinicId: booking.clinicId,
+        dentistId: preferredDentist || undefined,
+        referralId: booking.referralId || undefined,
+        appointmentDate: booking.date,
+        timeSlot: booking.time,
+        serviceType: 'checkup',
+        notes: notes || undefined,
+        patientName: name,
+        patientPhone: phone,
+        patientEmail: email,
+        remindEmail,
+        remindSms,
+      }),
+    });
+
+    document.getElementById('modal-summary').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:0;">
+        <div class="review-row"><span class="rv-label">🏥 Clinic</span><span class="rv-value">${booking.clinicName}</span></div>
+        <div class="review-row"><span class="rv-label">📅 Date</span><span class="rv-value">${booking.dateLabel}</span></div>
+        <div class="review-row"><span class="rv-label">⏰ Time</span><span class="rv-value">${formatTime(booking.time)}</span></div>
+        <div class="review-row"><span class="rv-label">📋 Ref</span><span class="rv-value" style="font-family:monospace;font-size:0.8rem;">#${String(data.appointment_id).slice(-8)}</span></div>
+      </div>`;
+    document.getElementById('confirm-modal').classList.add('open');
+
+  } catch (err) {
+    document.getElementById('err-booking').textContent = err.message;
+    document.getElementById('err-booking').style.display = 'block';
+  } finally {
+    btnText.style.display = ''; spinner.style.display = 'none'; btn.disabled = false;
+  }
+}
+
+function bookAnother() {
+  document.getElementById('confirm-modal').classList.remove('open');
+  Object.assign(booking, { clinicId:null, clinicName:'', clinicAddress:'', date:null, dateLabel:'', time:'', referralId:null });
+  renderClinics(CLINICS);
+  goToStep(1);
+}
+
+document.getElementById('confirm-modal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+// Feature 16: Generate PDF receipt using browser print
+let lastBookingData = null;
+
+function downloadReceipt() {
+  if (!lastBookingData) return;
+  const { appointmentId, clinicName, clinicAddress, date, time, service, name, email, phone } = lastBookingData;
+  const printWin = window.open('', '_blank', 'width=600,height=800');
+  printWin.document.write(`<!DOCTYPE html>
+<html><head><title>Appointment Receipt — HomoDentHealth</title>
+<style>
+  body { font-family: system-ui, sans-serif; padding: 40px; color: #1a1a1a; max-width: 560px; margin: 0 auto; }
+  .logo { font-size: 1.4rem; font-weight: 800; color: #2E9B6B; margin-bottom: 4px; }
+  .ref { font-size: .82rem; color: #888; margin-bottom: 28px; }
+  h2 { font-size: 1.1rem; color: #2E9B6B; margin: 20px 0 12px; border-bottom: 1.5px solid #e0f2ed; padding-bottom: 6px; }
+  .row { display: flex; justify-content: space-between; padding: 6px 0; font-size: .9rem; border-bottom: 1px solid #f0f7f5; }
+  .row span:first-child { color: #666; }
+  .row span:last-child { font-weight: 600; }
+  .disclaimer { font-size: .75rem; color: #aaa; margin-top: 32px; border-top: 1px solid #eee; padding-top: 12px; }
+  @media print { body { padding: 20px; } }
+</style></head>
+<body>
+<div class="logo">🦷 HomoDentHealth</div>
+<div class="ref">Appointment Receipt · Ref: #${appointmentId}</div>
+<h2>Appointment Details</h2>
+<div class="row"><span>Clinic</span><span>${clinicName}</span></div>
+<div class="row"><span>Address</span><span>${clinicAddress || 'See clinic profile'}</span></div>
+<div class="row"><span>Date</span><span>${date}</span></div>
+<div class="row"><span>Time</span><span>${time}</span></div>
+<div class="row"><span>Service</span><span>${service}</span></div>
+<h2>Patient Details</h2>
+<div class="row"><span>Name</span><span>${name}</span></div>
+<div class="row"><span>Email</span><span>${email}</span></div>
+<div class="row"><span>Phone</span><span>${phone}</span></div>
+<div class="disclaimer">
+  This receipt is for reference only. Please arrive 10 minutes before your appointment time.
+  HomoDentHealth does not guarantee clinic availability — contact the clinic directly to confirm.
+  © ${new Date().getFullYear()} HomoDentHealth.
+</div>
+<script>window.onload = () => { window.print(); }<\/script>
+</body></html>`);
+  printWin.document.close();
+}
+
+</script>
+</body>
+</html>

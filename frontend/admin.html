@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin Panel — HomoDentHealth</title>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  body { background: var(--bg); }
+  .admin-view { display: none; }
+  .admin-view.active { display: block; animation: fadeInUp 0.35s ease; }
+  .sidebar-nav a { cursor: pointer; }
+  .sidebar-user {
+    display: flex; align-items: center; gap: 10px; padding: 14px;
+    background: var(--light-teal); border-radius: var(--radius); margin-bottom: 16px;
+  }
+  .data-table-actions { display: flex; gap: 6px; }
+  .icon-btn {
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
+    background: white; display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; cursor: pointer; transition: all 0.2s; color: var(--text-muted);
+  }
+  .icon-btn:hover { background: var(--light-teal); color: var(--primary); border-color: var(--secondary); }
+  .icon-btn.danger:hover { background: #FEE2E2; color: var(--accent); border-color: #FECACA; }
+  .activity-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #F0F7F7; }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+  .security-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #F0F7F7; }
+  .security-row:last-child { border-bottom: none; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+  .bar-chart { display:flex; align-items:flex-end; gap:10px; height:180px; padding-top:10px; }
+  .bar-chart .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end; }
+  .bar-chart .bar { width:100%; max-width:36px; background:var(--primary); border-radius:6px 6px 0 0; min-height:3px; transition: height 0.4s; }
+  .bar-chart .bar-label { font-size:0.72rem; color:var(--text-muted); }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="nav-logo"><img src="images/logo.png" alt="HomoDentHealth" class="nav-logo-img" /></a>
+    <div class="nav-links">
+      <span class="badge badge-teal" style="font-size:0.78rem;">🔐 Super Admin Panel</span>
+    </div>
+    <div class="nav-actions">
+      <span id="admin-user-name" style="font-size:0.85rem;color:var(--text-muted);"></span>
+      <a href="#" id="btn-logout" class="btn btn-secondary btn-sm">Logout</a>
+    </div>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+    <span class="badge badge-teal" style="margin-bottom:8px;">🔐 Super Admin Panel</span>
+    <a href="#" id="btn-logout-mobile" class="btn btn-secondary btn-sm">Logout</a>
+  </div>
+</nav>
+
+<div class="layout-sidebar">
+
+  <aside class="sidebar">
+    <div class="sidebar-user">
+      <div class="author-avatar" style="background:var(--primary);color:white;" id="admin-avatar">?</div>
+      <div>
+        <div style="font-weight:700;font-size:0.85rem;" id="admin-fullname">—</div>
+        <div style="font-size:0.75rem;color:var(--text-muted);">Super Admin</div>
+      </div>
+    </div>
+    <div class="sidebar-section-label">Overview</div>
+    <nav class="sidebar-nav">
+      <a class="active" data-view="view-dashboard">📊 Dashboard</a>
+      <a data-view="view-analytics">📈 Analytics</a>
+    </nav>
+    <div class="sidebar-section-label">Management</div>
+    <nav class="sidebar-nav">
+      <a data-view="view-users">👥 Manage Users</a>
+      <a data-view="view-clinics">🏥 Manage Clinics</a>
+      <a data-view="view-articles">📝 Manage Articles</a>
+      <a data-view="view-appointments">📅 Appointments</a>
+    </nav>
+    <div class="sidebar-section-label">System</div>
+    <nav class="sidebar-nav">
+      <a data-view="view-security">🔒 Security &amp; Settings</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- ================= DASHBOARD ================= -->
+    <div class="admin-view active" id="view-dashboard">
+      <h2 class="mb-8">Dashboard Overview</h2>
+      <p class="mb-24" style="font-size:0.875rem;">Live numbers from the database — no sample data.</p>
+
+      <div class="grid-4 mb-24">
+        <div class="stat-card"><div class="flex-between"><div class="stat-num" id="kpi-patients">—</div><div style="font-size:1.5rem;">🧑‍⚕️</div></div><div class="stat-label">Active Patients</div></div>
+        <div class="stat-card"><div class="flex-between"><div class="stat-num" id="kpi-clinics">—</div><div style="font-size:1.5rem;">🏥</div></div><div class="stat-label">Registered Clinics</div></div>
+        <div class="stat-card"><div class="flex-between"><div class="stat-num" id="kpi-assessments">—</div><div style="font-size:1.5rem;">📋</div></div><div class="stat-label">Total Assessments</div></div>
+        <div class="stat-card"><div class="flex-between"><div class="stat-num" id="kpi-emergency">—</div><div style="font-size:1.5rem;">🚨</div></div><div class="stat-label">Emergency Flags (7d)</div></div>
+      </div>
+
+      <div class="grid-2 mb-24">
+        <div class="card">
+          <h4 class="mb-16">Appointments — Last 7 Days</h4>
+          <div class="bar-chart" id="weekly-chart"><p>Loading…</p></div>
+        </div>
+        <div class="card">
+          <h4 class="mb-16">Triage Level Breakdown (recent assessments)</h4>
+          <div id="level-breakdown"><p>Loading…</p></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4 class="mb-16">Recent Activity</h4>
+        <div id="recent-activity"><p>Loading…</p></div>
+      </div>
+    </div>
+
+    <!-- ================= ANALYTICS ================= -->
+    <div class="admin-view" id="view-analytics">
+      <h2 class="mb-24">Analytics</h2>
+      <div class="grid-3 mb-24">
+        <div class="stat-card"><div class="stat-num" id="an-total-assessments">—</div><div class="stat-label">Total Assessments</div></div>
+        <div class="stat-card"><div class="stat-num" id="an-total-appointments">—</div><div class="stat-label">Total Appointments (confirmed/completed)</div></div>
+        <div class="stat-card"><div class="stat-num" id="an-emergency">—</div><div class="stat-label">Emergency Cases (7d)</div></div>
+      </div>
+      <div class="card mb-24">
+        <h4 class="mb-16">Most Common Conditions Detected</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Condition</th><th>Cases (recent)</th><th>Typical Urgency</th></tr></thead>
+            <tbody id="conditions-tbody"><tr><td colspan="3">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h4 class="mb-16">Clinics by City</h4>
+        <div class="grid-4" id="clinics-by-city"><p>Loading…</p></div>
+      </div>
+    </div>
+
+    <!-- ================= MANAGE USERS ================= -->
+    <div class="admin-view" id="view-users">
+      <div class="flex-between mb-24" style="flex-wrap:wrap;gap:12px;">
+        <div><h2>Manage Users</h2><p style="font-size:0.875rem;margin-top:4px;">View and manage patients, dentists, and clinic admins.</p></div>
+      </div>
+      <div class="card mb-24" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <input type="text" id="user-search" class="form-control" placeholder="Search users by name or email..." style="flex:2;min-width:200px;"/>
+        <select id="user-role-filter" class="form-control" style="flex:1;min-width:150px;">
+          <option value="">All Roles</option>
+          <option value="user">Patient</option>
+          <option value="dentist">Dentist / Therapist</option>
+          <option value="clinic_manager">Clinic Admin</option>
+          <option value="admin">Super Admin</option>
+        </select>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Joined</th><th>Verified</th><th>Actions</th></tr></thead>
+            <tbody id="users-tbody"><tr><td colspan="6">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="flex-between mt-16">
+        <span style="font-size:0.82rem;color:var(--text-muted);" id="users-count"></span>
+      </div>
+    </div>
+
+    <!-- ================= MANAGE CLINICS ================= -->
+    <div class="admin-view" id="view-clinics">
+      <div class="flex-between mb-24" style="flex-wrap:wrap;gap:12px;">
+        <div><h2>Manage Clinics</h2><p style="font-size:0.875rem;margin-top:4px;">Edit or update clinics in the directory.</p></div>
+      </div>
+      <div class="grid-3 mb-24">
+        <div class="stat-card"><div class="stat-num" id="cl-total">—</div><div class="stat-label">Active Clinics</div></div>
+        <div class="stat-card"><div class="stat-num" id="cl-emergency">—</div><div class="stat-label">24/7 Emergency Clinics</div></div>
+        <div class="stat-card"><div class="stat-num" id="cl-avg-rating">—</div><div class="stat-label">Average Rating</div></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Clinic</th><th>Location</th><th>Specialty</th><th>Emergency</th><th>Rating</th><th>Actions</th></tr></thead>
+            <tbody id="clinics-tbody"><tr><td colspan="6">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= MANAGE ARTICLES ================= -->
+    <div class="admin-view" id="view-articles">
+      <div class="flex-between mb-24" style="flex-wrap:wrap;gap:12px;">
+        <div><h2>Manage Articles</h2><p style="font-size:0.875rem;margin-top:4px;">Create, edit, and publish dental education content.</p></div>
+        <button class="btn btn-primary" id="btn-new-article">+ New Article</button>
+      </div>
+
+      <div class="card mb-24" id="article-editor" style="display:none;">
+        <h4 class="mb-16" id="article-editor-title">New Article</h4>
+        <input type="hidden" id="article-id"/>
+        <div class="form-group"><label>Title</label><input type="text" id="art-title" class="form-control"/></div>
+        <div class="form-group"><label>Category</label>
+          <select id="art-category" class="form-control">
+            <option value="dental-health">Dental Health</option>
+            <option value="oral-hygiene">Oral Hygiene</option>
+            <option value="treatment-guide">Treatment Guide</option>
+            <option value="lifestyle">Lifestyle</option>
+            <option value="emergency">Emergency</option>
+            <option value="kids-dental">Kids' Dental</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Excerpt</label><textarea id="art-excerpt" class="form-control" rows="2"></textarea></div>
+        <div class="form-group"><label>Content</label><textarea id="art-content" class="form-control" rows="8"></textarea></div>
+        <div id="article-alert" class="auth-alert" style="margin-bottom:12px;"></div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-primary" id="btn-save-article">Save Draft</button>
+          <button class="btn btn-secondary" id="btn-cancel-article">Cancel</button>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Title</th><th>Category</th><th>Author</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="articles-tbody"><tr><td colspan="5">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= APPOINTMENTS ================= -->
+    <div class="admin-view" id="view-appointments">
+      <h2 class="mb-24">Appointments</h2>
+      <div class="grid-4 mb-24">
+        <div class="stat-card"><div class="stat-num" id="ap-week">—</div><div class="stat-label">This Week</div></div>
+        <div class="stat-card"><div class="stat-num" id="ap-today">—</div><div class="stat-label">Today</div></div>
+        <div class="stat-card"><div class="stat-num" id="ap-pending">—</div><div class="stat-label">Pending</div></div>
+        <div class="stat-card"><div class="stat-num" id="ap-cancelled">—</div><div class="stat-label">Cancelled</div></div>
+      </div>
+      <div class="flex-between mb-16">
+        <span></span>
+        <button class="btn btn-secondary btn-sm" id="btn-export-appointments">⬇ Export CSV</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Patient</th><th>Clinic</th><th>Date</th><th>Time</th><th>Service</th><th>Status</th></tr></thead>
+            <tbody id="appointments-tbody"><tr><td colspan="6">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SECURITY & SETTINGS ================= -->
+    <div class="admin-view" id="view-security">
+      <h2 class="mb-24">Security &amp; Platform Info</h2>
+
+      <div class="card mb-24">
+        <h4 class="mb-16">Security Posture (read-only — reflects the deployed code)</h4>
+        <div class="security-row"><div><strong style="font-size:0.875rem;">Password Hashing</strong><div class="text-muted" style="font-size:0.78rem;">bcrypt, 12 salt rounds</div></div><span class="badge badge-mild">Enabled</span></div>
+        <div class="security-row"><div><strong style="font-size:0.875rem;">Session Tokens</strong><div class="text-muted" style="font-size:0.78rem;">Short-lived JWT access tokens + refresh tokens</div></div><span class="badge badge-mild">Enabled</span></div>
+        <div class="security-row"><div><strong style="font-size:0.875rem;">Role-Based Access Control</strong><div class="text-muted" style="font-size:0.78rem;">Patient / Dentist / Clinic Manager / Admin scopes enforced server-side</div></div><span class="badge badge-mild">Enabled</span></div>
+        <div class="security-row"><div><strong style="font-size:0.875rem;">Rate Limiting</strong><div class="text-muted" style="font-size:0.78rem;">Auth, assessment, and appointment endpoints throttled per IP</div></div><span class="badge badge-mild">Enabled</span></div>
+        <div class="security-row"><div><strong style="font-size:0.875rem;">Account Lockout</strong><div class="text-muted" style="font-size:0.78rem;">Accounts lock for 15 minutes after 5 failed login attempts</div></div><span class="badge badge-mild">Enabled</span></div>
+        <div class="security-row"><div><strong style="font-size:0.875rem;">Email Verification (OTP)</strong><div class="text-muted" style="font-size:0.78rem;">Required before login is permitted</div></div><span class="badge badge-mild">Enabled</span></div>
+        <div class="security-row"><div><strong style="font-size:0.875rem;">HTTPS</strong><div class="text-muted" style="font-size:0.78rem;">Enforced at the hosting/CDN layer — set up on your hosting provider</div></div><span class="badge badge-moderate">Depends on host</span></div>
+      </div>
+
+      <div class="card">
+        <h4 class="mb-16">Platform Info</h4>
+        <div class="security-row"><div><strong style="font-size:0.875rem;">Triage Engine</strong><div class="text-muted" style="font-size:0.78rem;">Rule-based symptom engine (client + server)</div></div><span class="badge badge-mild">Active</span></div>
+        <div class="security-row"><div><strong style="font-size:0.875rem;">Locked Accounts Right Now</strong></div><span class="badge badge-teal" id="locked-accounts-count">—</span></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="config.js"></script>
+<script src="main.js"></script>
+<script>
+const user = requireAuth(['admin']);
+
+document.getElementById('btn-logout').addEventListener('click', e => { e.preventDefault(); logout(); });
+document.getElementById('btn-logout-mobile').addEventListener('click', e => { e.preventDefault(); logout(); });
+
+document.querySelectorAll('.sidebar-nav a[data-view]').forEach(link => {
+  link.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar-nav a[data-view]').forEach(a => a.classList.remove('active'));
+    link.classList.add('active');
+    document.querySelectorAll('.admin-view').forEach(v => v.classList.remove('active'));
+    document.getElementById(link.dataset.view).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+const LEVEL_BADGE = { emergency: 'badge-emergency', severe: 'badge-severe', moderate: 'badge-moderate', mild: 'badge-mild' };
+const STATUS_BADGE = { pending: 'badge-moderate', confirmed: 'badge-teal', in_progress: 'badge-teal', completed: 'badge-mild', cancelled: 'badge-severe', no_show: 'badge-severe' };
+const ROLE_LABEL = { user: 'Patient', dentist: 'Dentist', clinic_manager: 'Clinic Admin', admin: 'Super Admin', live_chat_agent: 'live-chat Agent', content_admin: 'Content Admin' };
+const ROLE_BADGE = { user: 'badge-teal', dentist: 'badge-moderate', clinic_manager: 'badge-severe', admin: 'badge-emergency', content_admin: 'badge-mild', live_chat_agent: 'badge-mild' };
+
+function fmtDate(d) { return new Date(d).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }); }
+function isToday(d) { return new Date(d).toDateString() === new Date().toDateString(); }
+function csvEscape(v) { return `"${String(v ?? '').replace(/"/g,'""')}"`; }
+function downloadCsv(filename, rows) {
+  const csv = rows.map(r => r.map(csvEscape).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+/* ── DASHBOARD ────────────────────────────────── */
+async function loadDashboard() {
+  try {
+    const [statsRes, weeklyRes, usersRes, assessmentsRes] = await Promise.all([
+      apiFetch('/api/admin/dashboard/stats'),
+      apiFetch('/api/admin/dashboard/weekly'),
+      apiFetch('/api/admin/users?role=user&limit=1'),
+      apiFetch('/api/admin/assessments?limit=50')
+    ]);
+
+    document.getElementById('kpi-patients').textContent = usersRes.pagination.total;
+    document.getElementById('kpi-clinics').textContent = statsRes.stats.totalClinics;
+    document.getElementById('kpi-assessments').textContent = statsRes.stats.totalAssessments;
+    document.getElementById('kpi-emergency').textContent = assessmentsRes.emergencyCount;
+
+    // Weekly bar chart
+    const days = weeklyRes.days || [];
+    const max = Math.max(1, ...days.map(d => d.count));
+    document.getElementById('weekly-chart').innerHTML = `
+      <div class="bar-chart">
+        ${days.map(d => `
+          <div class="bar-col">
+            <div style="font-size:0.72rem;font-weight:600;">${d.count}</div>
+            <div class="bar" style="height:${Math.max(4, (d.count / max) * 140)}px;"></div>
+            <div class="bar-label">${d.label}</div>
+          </div>
+        `).join('')}
+      </div>`;
+
+    // Triage level breakdown
+    const levels = { mild: 0, moderate: 0, severe: 0, emergency: 0 };
+    (assessmentsRes.assessments || []).forEach(a => { if (a.result && levels[a.result.level] !== undefined) levels[a.result.level]++; });
+    const total = Object.values(levels).reduce((a,b) => a+b, 0) || 1;
+    const levelMeta = { mild:['✅ Mild','#2E9B6B'], moderate:['🔶 Moderate','#D97706'], severe:['⚠️ Urgent','#DC3545'], emergency:['🚨 Emergency','#A51C30'] };
+    document.getElementById('level-breakdown').innerHTML = Object.entries(levels).map(([k,v]) => `
+      <div style="margin-bottom:14px;">
+        <div class="flex-between mb-8"><span style="font-size:0.85rem;">${levelMeta[k][0]}</span><span class="fw-700" style="font-size:0.85rem;">${v} (${Math.round(v/total*100)}%)</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${v/total*100}%;background:${levelMeta[k][1]};"></div></div>
+      </div>`).join('');
+
+    // Recent activity — built from real recent appointments + assessments
+    const apptRes = await apiFetch('/api/admin/appointments?limit=5');
+    const activity = [
+      ...(assessmentsRes.assessments || []).slice(0,3).map(a => ({
+        icon: a.result?.level === 'emergency' ? '🚨' : '📋', bg: a.result?.level === 'emergency' ? '#FCE4E8' : 'var(--light-teal)',
+        text: `<strong>Assessment submitted</strong> — ${a.patientName || 'A patient'}: ${a.result?.condition || ''}`,
+        time: a.createdAt
+      })),
+      ...(apptRes.appointments || []).slice(0,3).map(a => ({
+        icon: '📅', bg: '#D1FAE5',
+        text: `<strong>Appointment ${a.status}</strong> — ${a.user ? a.user.firstName : (a.contactName||'Guest')} at ${a.clinic?.name || 'a clinic'}`,
+        time: a.createdAt
+      }))
+    ].sort((a,b) => new Date(b.time) - new Date(a.time)).slice(0,6);
+
+    document.getElementById('recent-activity').innerHTML = activity.length ? activity.map(item => `
+      <div class="activity-item">
+        <div class="activity-dot" style="background:${item.bg};">${item.icon}</div>
+        <div>${item.text}<div class="text-muted" style="font-size:0.78rem;margin-top:2px;">${fmtDate(item.time)}</div></div>
+      </div>`).join('') : `<div class="empty-state">No activity yet.</div>`;
+
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+/* ── ANALYTICS ────────────────────────────────── */
+async function loadAnalytics() {
+  try {
+    const [statsRes, assessmentsRes, clinicsRes] = await Promise.all([
+      apiFetch('/api/admin/dashboard/stats'),
+      apiFetch('/api/admin/assessments?limit=200'),
+      apiFetch('/api/admin/clinics?limit=100')
+    ]);
+
+    document.getElementById('an-total-assessments').textContent = statsRes.stats.totalAssessments;
+    document.getElementById('an-total-appointments').textContent = statsRes.stats.totalAppointments;
+    document.getElementById('an-emergency').textContent = assessmentsRes.emergencyCount;
+
+    const byCondition = {};
+    (assessmentsRes.assessments || []).forEach(a => {
+      const c = a.result?.condition || 'Unknown';
+      byCondition[c] = byCondition[c] || { count: 0, level: a.result?.level };
+      byCondition[c].count++;
+    });
+    const rows = Object.entries(byCondition).sort((a,b) => b[1].count - a[1].count).slice(0, 10);
+    document.getElementById('conditions-tbody').innerHTML = rows.length ? rows.map(([cond, d]) => `
+      <tr><td>${cond}</td><td>${d.count}</td><td><span class="badge ${LEVEL_BADGE[d.level] || 'badge-teal'}">${d.level || ''}</span></td></tr>
+    `).join('') : `<tr><td colspan="3">No assessments yet.</td></tr>`;
+
+    const byCity = {};
+    (clinicsRes.clinics || []).forEach(c => {
+      const city = c.location?.city || 'Unknown';
+      byCity[city] = (byCity[city] || 0) + 1;
+    });
+    document.getElementById('clinics-by-city').innerHTML = Object.entries(byCity).map(([city, n]) => `
+      <div class="flex-between"><span style="font-size:0.875rem;">${city}</span><span class="fw-700">${n}</span></div>
+    `).join('') || '<p>No clinics yet.</p>';
+
+  } catch (e) { console.error(e); }
+}
+
+/* ── USERS ────────────────────────────────────── */
+async function loadUsers() {
+  const search = document.getElementById('user-search').value;
+  const role = document.getElementById('user-role-filter').value;
+  try {
+    const params = new URLSearchParams({ limit: 50 });
+    if (search) params.set('search', search);
+    if (role) params.set('role', role);
+    const res = await apiFetch(`/api/admin/users?${params}`);
+    const users = res.users || [];
+    document.getElementById('users-count').textContent = `Showing ${users.length} of ${res.pagination.total} users`;
+
+    document.getElementById('users-tbody').innerHTML = users.length ? users.map(u => `
+      <tr>
+        <td><div class="flex-center gap-12"><div class="author-avatar">${(u.firstName||u.email||'?')[0].toUpperCase()}</div><span class="fw-600">${u.firstName || ''} ${u.lastName || ''}</span></div></td>
+        <td>${u.email}</td>
+        <td><span class="badge ${ROLE_BADGE[u.role]||'badge-teal'}">${ROLE_LABEL[u.role]||u.role}</span></td>
+        <td>${fmtDate(u.createdAt)}</td>
+        <td><span class="badge ${u.isVerified ? 'badge-mild' : 'badge-moderate'}">${u.isVerified ? 'Verified' : 'Unverified'}</span></td>
+        <td><div class="data-table-actions">
+          <select class="form-control" style="padding:4px 8px;font-size:0.75rem;" data-role-select="${u._id}">
+            ${Object.keys(ROLE_LABEL).map(r => `<option value="${r}" ${r===u.role?'selected':''}>${ROLE_LABEL[r]}</option>`).join('')}
+          </select>
+        </div></td>
+      </tr>
+    `).join('') : `<tr><td colspan="6">No users found.</td></tr>`;
+
+    document.querySelectorAll('[data-role-select]').forEach(sel => {
+      sel.addEventListener('change', async () => {
+        try {
+          await apiFetch(`/api/admin/users/${sel.dataset.roleSelect}/role`, { method: 'PATCH', body: JSON.stringify({ role: sel.value }) });
+        } catch (e) { alert(e.message); loadUsers(); }
+      });
+    });
+  } catch (e) {
+    document.getElementById('users-tbody').innerHTML = `<tr><td colspan="6">Could not load users.</td></tr>`;
+  }
+}
+document.getElementById('user-search').addEventListener('input', debounce(loadUsers, 350));
+document.getElementById('user-role-filter').addEventListener('change', loadUsers);
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+/* ── CLINICS ──────────────────────────────────── */
+async function loadClinics() {
+  try {
+    const res = await apiFetch('/api/admin/clinics?limit=100');
+    const clinics = res.clinics || [];
+    document.getElementById('cl-total').textContent = clinics.length;
+    document.getElementById('cl-emergency').textContent = clinics.filter(c => c.emergencyAvailable).length;
+    const avgRating = clinics.length ? (clinics.reduce((s,c) => s + (c.ratings?.averageRating||0), 0) / clinics.length).toFixed(1) : '—';
+    document.getElementById('cl-avg-rating').textContent = avgRating;
+
+    document.getElementById('clinics-tbody').innerHTML = clinics.length ? clinics.map(c => `
+      <tr>
+        <td><div class="flex-center gap-12"><div class="clinic-avatar" style="width:36px;height:36px;font-size:1rem;">${c.emergencyAvailable?'⚕️':'🏥'}</div><span class="fw-600">${c.name}</span></div></td>
+        <td>${c.location?.city || ''}</td>
+        <td>${(c.specialties||[]).join(', ') || 'general'}</td>
+        <td><span class="badge ${c.emergencyAvailable?'badge-mild':'badge-severe'}">${c.emergencyAvailable?'Yes':'No'}</span></td>
+        <td>⭐ ${(c.ratings?.averageRating||0).toFixed(1)}</td>
+        <td><div class="data-table-actions"><button class="icon-btn danger" title="Suspend" data-suspend-clinic="${c._id}">🚫</button></div></td>
+      </tr>
+    `).join('') : `<tr><td colspan="6">No clinics yet.</td></tr>`;
+
+    document.querySelectorAll('[data-suspend-clinic]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Suspend this clinic? It will be hidden from the public directory.')) return;
+        try {
+          await apiFetch(`/api/admin/clinics/${btn.dataset.suspendClinic}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'suspended' }) });
+          loadClinics();
+        } catch (e) { alert(e.message); }
+      });
+    });
+  } catch (e) {
+    document.getElementById('clinics-tbody').innerHTML = `<tr><td colspan="6">Could not load clinics.</td></tr>`;
+  }
+}
+
+/* ── ARTICLES ─────────────────────────────────── */
+async function loadArticles() {
+  try {
+    const res = await apiFetch('/api/admin/blog?limit=50');
+    const posts = res.posts || res.blogs || [];
+    document.getElementById('articles-tbody').innerHTML = posts.length ? posts.map(p => `
+      <tr>
+        <td class="fw-600">${p.title}</td>
+        <td><span class="badge badge-teal">${p.category || '—'}</span></td>
+        <td>${p.author ? `${p.author.firstName||''} ${p.author.lastName||''}` : '—'}</td>
+        <td><span class="badge ${p.status === 'published' ? 'badge-mild' : 'badge-moderate'}">${p.status}</span></td>
+        <td><div class="data-table-actions">
+          ${p.status !== 'published' ? `<button class="icon-btn" title="Publish" data-publish="${p._id}">✅</button>` : ''}
+        </div></td>
+      </tr>
+    `).join('') : `<tr><td colspan="5">No articles yet. Click "+ New Article" to create one.</td></tr>`;
+
+    document.querySelectorAll('[data-publish]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try { await apiFetch(`/api/admin/blog/${btn.dataset.publish}/publish`, { method: 'PATCH' }); loadArticles(); }
+        catch (e) { alert(e.message); }
+      });
+    });
+  } catch (e) {
+    document.getElementById('articles-tbody').innerHTML = `<tr><td colspan="5">Could not load articles.</td></tr>`;
+  }
+}
+
+document.getElementById('btn-new-article').addEventListener('click', () => {
+  document.getElementById('article-id').value = '';
+  document.getElementById('art-title').value = '';
+  document.getElementById('art-category').value = '';
+  document.getElementById('art-excerpt').value = '';
+  document.getElementById('art-content').value = '';
+  document.getElementById('article-editor-title').textContent = 'New Article';
+  document.getElementById('article-editor').style.display = '';
+});
+document.getElementById('btn-cancel-article').addEventListener('click', () => {
+  document.getElementById('article-editor').style.display = 'none';
+});
+document.getElementById('btn-save-article').addEventListener('click', async () => {
+  const alertEl = document.getElementById('article-alert');
+  try {
+    await apiFetch('/api/admin/blog', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: document.getElementById('art-title').value,
+        category: document.getElementById('art-category').value,
+        excerpt: document.getElementById('art-excerpt').value,
+        content: document.getElementById('art-content').value
+      })
+    });
+    document.getElementById('article-editor').style.display = 'none';
+    loadArticles();
+  } catch (e) {
+    alertEl.textContent = e.message;
+    alertEl.className = 'auth-alert show error';
+  }
+});
+
+/* ── APPOINTMENTS ─────────────────────────────── */
+let lastAppointments = [];
+async function loadAppointments() {
+  try {
+    const res = await apiFetch('/api/admin/appointments?limit=100');
+    lastAppointments = res.appointments || [];
+    document.getElementById('ap-week').textContent = lastAppointments.length;
+    document.getElementById('ap-today').textContent = lastAppointments.filter(a => isToday(a.appointmentDate)).length;
+    document.getElementById('ap-pending').textContent = lastAppointments.filter(a => a.status === 'pending').length;
+    document.getElementById('ap-cancelled').textContent = lastAppointments.filter(a => a.status === 'cancelled').length;
+
+    document.getElementById('appointments-tbody').innerHTML = lastAppointments.length ? lastAppointments.map(a => `
+      <tr>
+        <td>${a.user ? `${a.user.firstName||''} ${a.user.lastName||''}` : (a.contactName || 'Guest')}</td>
+        <td>${a.clinic?.name || ''}</td>
+        <td>${fmtDate(a.appointmentDate)}</td>
+        <td>${a.timeSlot?.startTime || ''}</td>
+        <td>${a.serviceType}</td>
+        <td><span class="badge ${STATUS_BADGE[a.status]||'badge-teal'}">${a.status.replace('_',' ')}</span></td>
+      </tr>
+    `).join('') : `<tr><td colspan="6">No appointments yet.</td></tr>`;
+  } catch (e) {
+    document.getElementById('appointments-tbody').innerHTML = `<tr><td colspan="6">Could not load appointments.</td></tr>`;
+  }
+}
+document.getElementById('btn-export-appointments').addEventListener('click', () => {
+  const rows = [['Patient','Clinic','Date','Time','Service','Status']];
+  lastAppointments.forEach(a => rows.push([
+    a.user ? `${a.user.firstName||''} ${a.user.lastName||''}` : (a.contactName||'Guest'),
+    a.clinic?.name || '', fmtDate(a.appointmentDate), a.timeSlot?.startTime || '', a.serviceType, a.status
+  ]));
+  downloadCsv('appointments.csv', rows);
+});
+
+/* ── SECURITY ─────────────────────────────────── */
+async function loadSecurity() {
+  try {
+    const res = await apiFetch('/api/admin/users?limit=200');
+    const locked = (res.users || []).filter(u => u.lockUntil && new Date(u.lockUntil) > new Date()).length;
+    document.getElementById('locked-accounts-count').textContent = locked;
+  } catch (e) { /* non-critical */ }
+}
+
+/* ── INIT ─────────────────────────────────────── */
+if (user) {
+  document.getElementById('admin-user-name').textContent = user.fullName || user.email;
+  document.getElementById('admin-fullname').textContent = user.fullName || user.email;
+  document.getElementById('admin-avatar').textContent = (user.firstName || user.email || '?')[0].toUpperCase();
+
+  loadDashboard();
+  loadAnalytics();
+  loadUsers();
+  loadClinics();
+  loadArticles();
+  loadAppointments();
+  loadSecurity();
+}
+</script>
+</body>
+</html>

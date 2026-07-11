@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Find a Clinic — HomoDentHealth</title>
+
+<!-- Leaflet CSS — jsDelivr CDN (better West Africa connectivity, no SRI hash) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  .filter-bar { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+  .filter-bar .form-group { margin-bottom:0; flex:1; min-width:160px; }
+  .filter-bar .form-group.search-field { flex:2; min-width:220px; }
+  .clinics-layout { display:grid; grid-template-columns:1fr 380px; gap:28px; margin-top:28px; align-items:flex-start; }
+  /* #map must NOT have overflow:hidden — Leaflet places absolutely-positioned children outside its bounds */
+  .map-outer { border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--border); }
+  #map { width:100%; height:560px; z-index:0; }
+  .clinic-list { display:flex; flex-direction:column; gap:14px; max-height:560px; overflow-y:auto; padding-right:4px; }
+  .clinic-item .clinic-card { cursor:pointer; transition:all 0.2s; }
+  .clinic-item .clinic-card:hover { border-color:var(--secondary); box-shadow:var(--shadow); }
+  .clinic-item .clinic-card.active { border-color:var(--primary); background:var(--light-teal); }
+  .locate-btn { display:flex; align-items:center; gap:6px; font-size:0.8rem; font-weight:600; color:var(--primary); background:var(--light-teal); border:1px solid var(--border); padding:8px 14px; border-radius:var(--radius); cursor:pointer; transition:all 0.2s; }
+  .locate-btn:hover { background:var(--border); }
+
+  /* Street View panel */
+  #sv-panel { display:none; margin-top:16px; border-radius:12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 4px 16px rgba(0,0,0,0.1); }
+  #sv-header { background:var(--primary); color:white; padding:10px 16px; display:flex; align-items:center; justify-content:space-between; }
+  #sv-header span { font-weight:600; font-size:0.875rem; }
+  #sv-tabs { display:flex; background:#1a7a5a; }
+  .sv-tab { flex:1; padding:8px; border:none; background:transparent; color:rgba(255,255,255,0.7); cursor:pointer; font-size:0.78rem; font-weight:600; transition:all 0.2s; }
+  .sv-tab.active { background:white; color:var(--primary); }
+  #sv-frame-wrap { position:relative; padding-top:56.25%; background:#000; }
+  #sv-frame { position:absolute; inset:0; width:100%; height:100%; border:none; }
+  #sv-hint { padding:8px 16px; background:#F8FBFB; font-size:0.72rem; color:var(--text-muted); text-align:center; }
+  #sv-no-coverage { display:none; padding:24px; text-align:center; color:var(--text-muted); }
+
+  /* Leaflet popup overrides */
+  .leaflet-popup-content { min-width:200px; }
+  .lf-popup-btn { margin-top:8px; padding:6px 12px; background:var(--primary); color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.78rem; width:100%; }
+  .lf-popup-btn.secondary { background:white; color:var(--primary); border:1px solid var(--primary); margin-top:4px; }
+
+  /* Map type switcher */
+  .map-controls { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; align-items:center; }
+  .map-type-btn { padding:6px 14px; border:1px solid var(--border); border-radius:20px; background:white; cursor:pointer; font-size:0.78rem; transition:all 0.2s; }
+  .map-type-btn.active, .map-type-btn:hover { background:var(--primary); color:white; border-color:var(--primary); }
+
+  @media(max-width:900px) {
+    .clinics-layout { grid-template-columns:1fr; }
+    #map { height:360px; }
+    .clinic-list { max-height:none; }
+    .filter-bar { flex-direction:column; align-items:stretch; }
+    .filter-bar .form-group,
+    .filter-bar .form-group.search-field { min-width:0; flex:1 1 100%; }
+    .map-controls { overflow-x:auto; padding-bottom:4px; }
+    .locate-btn { width:100%; justify-content:center; }
+  }
+
+  @media(max-width:600px) {
+    .clinic-card { flex-direction:column; }
+    .clinic-avatar { width:44px; height:44px; font-size:1.3rem; }
+    .emergency-banner { flex-direction:column; align-items:flex-start; }
+    .emergency-banner .btn { width:100%; justify-content:center; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="nav-logo"><img src="images/logo.png" alt="HomoDentHealth" class="nav-logo-img"/></a>
+    <div class="nav-links">
+      <a href="index.html">Home</a><a href="about.html">About</a><a href="services.html">Services</a>
+      <a href="clinics.html">Find Clinics</a><a href="blog.html">Health Blog</a><a href="videos.html">Videos</a><a href="contact.html">Contact</a>
+    </div>
+    <div class="nav-actions">
+      <a href="auth.html" class="btn btn-secondary btn-sm">Login</a>
+      <a href="auth.html" class="btn btn-primary btn-sm">Register</a>
+    </div>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html">Home</a><a href="about.html">About</a><a href="services.html">Services</a>
+    <a href="clinics.html">Find Clinics</a><a href="blog.html">Health Blog</a><a href="contact.html">Contact</a>
+    <div class="m-actions">
+      <a href="auth.html" class="btn btn-secondary btn-sm">Login</a>
+      <a href="auth.html" class="btn btn-primary btn-sm">Register</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="breadcrumb"><a href="index.html">Home</a> › Find Clinics</div>
+  <h1>Dental Clinic Directory</h1>
+  <p>Find verified dental clinics near you. Click <strong>Use My Location</strong> to see clinics ranked by distance.</p>
+</div>
+
+<section style="background:var(--bg);">
+  <div class="container-wide">
+
+    <!-- Filters -->
+    <div class="card">
+      <div class="filter-bar">
+        <div class="form-group search-field">
+          <label for="clinic-search">Search by name or location</label>
+          <input type="text" id="clinic-search" class="form-control" placeholder="e.g. Lagos Dental Centre, Ikeja..."/>
+        </div>
+        <div class="form-group">
+          <label for="filter-specialty">Specialty</label>
+          <select id="filter-specialty" class="form-control">
+            <option value="">All Specialties</option>
+            <option value="general">General Dentistry</option>
+            <option value="orthodontics">Orthodontics</option>
+            <option value="periodontics">Periodontics</option>
+            <option value="pediatric_dentistry">Pediatric Dentistry</option>
+            <option value="oral_surgery">Oral Surgery</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="filter-emergency">Emergency Service</label>
+          <select id="filter-emergency" class="form-control">
+            <option value="">Any</option>
+            <option value="yes">24/7 Emergency Only</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:0;">
+          <label>&nbsp;</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="locate-btn" id="btn-locate">📍 Use My Location</button>
+            <span id="location-badge" style="display:none;align-items:center;gap:6px;font-size:0.78rem;color:#2E9B6B;font-weight:600;padding:6px 12px;background:#D1FAE5;border-radius:20px;">
+              📍 <span id="location-label"></span>
+              <button onclick="clearLocation()" style="background:none;border:none;cursor:pointer;color:#2E9B6B;">✕</button>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map + List -->
+    <div class="clinics-layout">
+
+      <!-- LEFT: map + controls + Street View -->
+      <div>
+        <!-- Map type switcher -->
+        <div class="map-controls">
+          <span style="font-size:0.78rem;color:var(--text-muted);font-weight:600;">Map style:</span>
+          <button class="map-type-btn active" onclick="setMapLayer('street', this)">🗺 Street</button>
+          <button class="map-type-btn" onclick="setMapLayer('satellite', this)">🛰 Satellite</button>
+          <button class="map-type-btn" onclick="setMapLayer('topo', this)">🏔 Topographic</button>
+          <button class="map-type-btn" onclick="setMapLayer('dark', this)">🌙 Dark</button>
+        </div>
+
+        <!-- Leaflet map -->
+        <!-- Leaflet map wrapped for border-radius without breaking Leaflet tiles -->
+<div class="map-outer">
+  <div id="map"></div>
+</div>
+
+        <!-- Street View panel (Mapillary or Google fallback) -->
+        <div id="sv-panel">
+          <div id="sv-header">
+            <span id="sv-clinic-name">Street View</span>
+            <button onclick="closeSV()" style="background:none;border:none;color:white;cursor:pointer;font-size:1.1rem;">✕</button>
+          </div>
+          <div id="sv-tabs">
+            <button class="sv-tab active" onclick="switchSVTab('mapillary', this)">📷 Street Photos (Mapillary)</button>
+            <button class="sv-tab" onclick="switchSVTab('osm', this)">🗺 OpenStreetMap View</button>
+            <button class="sv-tab" onclick="switchSVTab('satellite', this)">🛰 Satellite</button>
+          </div>
+          <div id="sv-frame-wrap">
+            <iframe id="sv-frame" allowfullscreen></iframe>
+          </div>
+          <div id="sv-hint">📍 Drag to look around · Use tabs to switch views · <a id="sv-external-link" href="#" target="_blank" style="color:var(--primary);">Open in Google Maps ↗</a></div>
+          <div id="sv-no-coverage" style="display:none;padding:24px;text-align:center;color:var(--text-muted);">
+            <div style="font-size:2rem;margin-bottom:8px;">📷</div>
+            <p>Street View photos are not available at this location yet.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: clinic list -->
+      <div class="clinic-list" id="clinic-list"></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Emergency banner -->
+<section style="background:white;" class="tight">
+  <div class="container">
+    <div class="emergency-banner">
+      <div class="icon">🚨</div>
+      <div>
+        <h3>Need urgent care right now?</h3>
+        <p>Filter by "24/7 Emergency" above, or call the national emergency line <strong>112</strong> for life-threatening situations.</p>
+      </div>
+      <a href="assessment.html" class="btn" style="background:white;color:#A51C30;border-color:white;font-weight:700;flex-shrink:0;">Run Symptom Check</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-disclaimer"><strong>Medical Disclaimer:</strong> Clinic listings are provided for referral convenience. HomoDentHealth does not guarantee real-time availability — please call ahead to confirm.</div>
+    <div class="footer-grid">
+      <div class="footer-brand"><div class="footer-logo"><img src="images/logo.png" alt="HomoDentHealth" style="height:28px;object-fit:contain;"/></div><p>Nigeria's dental screening and referral platform.</p></div>
+      <div class="footer-col"><h4>Platform</h4><ul><li><a href="assessment.html">Symptom Checker</a></li><li><a href="clinics.html">Find Clinics</a></li><li><a href="appointment.html">Book Appointment</a></li></ul></div>
+      <div class="footer-col"><h4>Company</h4><ul><li><a href="about.html">About Us</a></li><li><a href="services.html">Services</a></li><li><a href="blog.html">Health Blog</a></li></ul></div>
+      <div class="footer-col"><h4>Legal</h4><ul><li><a href="privacy.html">Privacy Policy</a></li><li><a href="terms.html">Terms of Service</a></li></ul></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 HomoDentHealth.</span></div>
+  </div>
+</footer>
+
+<!-- Leaflet JS (free, no API key required) -->
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="config.js"></script>
+<script src="main.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   HOMODENTHEALTH — CLINIC FINDER
+   Uses Leaflet.js + OpenStreetMap (free, no API key needed)
+   Street View via Mapillary iframe (open-source street photos)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Static fallback clinics (shown instantly; replaced by live API data) ── */
+const FALLBACK_CLINICS = [
+  {
+    id:'f1', name:'Quams Dental Clinic',
+    address:'No 9, Bonojo Road, Ijebu Ode, Ogun State',
+    lat:6.8230, lng:3.9240,
+    rating:4.8, hours:'Mon–Fri 08:00–15:00',
+    emergency:false, specialty:'general', phone:'+2348117294983', icon:'🏥'
+  },
+  {
+    id:'f2', name:'State Dental Clinic',
+    address:'State Dental Clinic Road, Ijebu Ode, Ogun State',
+    lat:6.8192, lng:3.9150,
+    rating:4.6, hours:'Mon–Fri 08:00–16:00',
+    emergency:true, specialty:'general', phone:'+2347062264014', icon:'⚕️'
+  },
+  {
+    id:'f3', name:'Hope Dental Clinic',
+    address:'Imepe Road, opposite FCMB, Ijebu Ode',
+    lat:6.8213, lng:3.9173,
+    rating:4.9, hours:'Open 24 hours',
+    emergency:true, specialty:'oral_surgery', phone:'+2349035872841', icon:'⚕️'
+  }
+];
+
+let CLINICS = [...FALLBACK_CLINICS]; // start with fallback, replaced on API success
+let userLocation = null;
+let map, userMarker;
+const clinicMarkers = [];
+let currentSVLat = null, currentSVLng = null, currentSVName = '';
+let activeSVTab = 'mapillary';
+
+/* ── Map tile layers ────────────────────────────────────────── */
+const TILE_LAYERS = {
+  street: {
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attr: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    opts: { maxZoom: 19 }
+  },
+  satellite: {
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attr: '© Esri, Maxar, Earthstar Geographics',
+    opts: { maxZoom: 18 }
+  },
+  topo: {
+    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+    attr: '© <a href="https://opentopomap.org">OpenTopoMap</a>',
+    opts: { maxZoom: 17 }
+  },
+  dark: {
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attr: '© <a href="https://carto.com/attributions">CARTO</a>',
+    opts: { maxZoom: 19 }
+  }
+};
+
+let currentLayer = null;
+
+function setMapLayer(type, btn) {
+  if (!map) return;
+  if (currentLayer) map.removeLayer(currentLayer);
+  const l = TILE_LAYERS[type];
+  currentLayer = L.tileLayer(l.url, { ...l.opts, attribution: l.attr }).addTo(map);
+  document.querySelectorAll('.map-type-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+/* ── Custom Leaflet marker icons ─────────────────────────────── */
+function clinicIcon(emergency) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      background:${emergency ? '#A51C30' : '#2E9B6B'};
+      color:white; font-size:1.1rem;
+      width:36px; height:36px; border-radius:50% 50% 50% 0;
+      transform:rotate(-45deg); display:flex; align-items:center;
+      justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.3);
+      border:2px solid white;">
+      <span style="transform:rotate(45deg);">${emergency ? '⚕️' : '🏥'}</span>
+    </div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -38]
+  });
+}
+
+const userIcon = L.divIcon({
+  className: '',
+  html: `<div style="width:16px;height:16px;background:#2563EB;border:3px solid white;border-radius:50%;box-shadow:0 0 0 4px rgba(37,99,235,0.3);"></div>`,
+  iconSize: [16, 16],
+  iconAnchor: [8, 8]
+});
+
+/* ── Initialise Leaflet map ─────────────────────────────────── */
+function initLeafletMap() {
+  map = L.map('map', {
+    center: [9.0820, 8.6753], // centre of Nigeria
+    zoom: 6,
+    zoomControl: true
+  });
+
+  // Default street layer
+  const l = TILE_LAYERS.street;
+  currentLayer = L.tileLayer(l.url, { ...l.opts, attribution: l.attr }).addTo(map);
+
+  // Scale bar (metres)
+  L.control.scale({ imperial: false }).addTo(map);
+}
+
+/* ── Format today's opening hours ─────────────────────────────  */
+function formatHoursToday(hours) {
+  if (!hours) return '';
+  const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  const today = days[new Date().getDay()];
+  const h = hours[today];
+  if (!h || !h.open) return 'Closed today';
+  return `Today ${h.open}–${h.close}`;
+}
+
+/* ── Haversine distance (km) ──────────────────────────────────  */
+function distanceKm(lat1, lng1, lat2, lng2) {
+  const R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLon = (lng2-lng1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+/* ── Fetch clinics from backend ────────────────────────────────  */
+async function fetchClinics() {
+  document.getElementById('clinic-list').innerHTML = `<div class="card text-center" style="padding:32px;"><p>Loading clinics…</p></div>`;
+  try {
+    const res = await apiFetch('/api/clinic?limit=50');
+    CLINICS = (res.clinics || []).map(c => ({
+      id: c._id,
+      name: c.name,
+      address: `${c.location?.address || ''}, ${c.location?.city || ''}`,
+      lat: c.location?.coordinates?.coordinates?.[1],
+      lng: c.location?.coordinates?.coordinates?.[0],
+      rating: c.ratings?.averageRating || 0,
+      hours: formatHoursToday(c.hours),
+      rawHours: c.hours || null,
+      emergency: !!c.emergencyAvailable,
+      specialty: (c.specialties && c.specialties[0]) || 'general',
+      phone: c.contact?.phone || '',
+      icon: c.emergencyAvailable ? '⚕️' : '🏥'
+    }));
+
+     // If database returned nothing, show fallback clinics instead of blank map
+    if (CLINICS.length === 0) CLINICS = [...FALLBACK_CLINICS];
+
+    renderClinicList();
+    plotClinicMarkers();
+  // REPLACE WITH THIS:
+  } catch (e) {
+    // API unreachable — plot the fallback clinics so the map is never blank
+    CLINICS = [...FALLBACK_CLINICS];
+    renderClinicList();
+    plotClinicMarkers();
+  }
+}
+
+/* ── Plot markers on Leaflet map ──────────────────────────────── */
+function plotClinicMarkers() {
+  clinicMarkers.forEach(m => map.removeLayer(m));
+  clinicMarkers.length = 0;
+
+  CLINICS.filter(c => c.lat && c.lng).forEach(c => {
+    const marker = L.marker([c.lat, c.lng], { icon: clinicIcon(c.emergency), title: c.name });
+
+    const popupHtml = `
+      <div style="min-width:200px;">
+        <div style="font-weight:700;font-size:0.9rem;margin-bottom:4px;">${c.name}</div>
+        <div style="font-size:0.78rem;color:#5A7477;margin-bottom:4px;">📍 ${c.address}</div>
+        <div style="font-size:0.78rem;margin-bottom:6px;">⭐ ${c.rating.toFixed(1)} · ${c.hours}</div>
+        ${c.emergency ? '<span style="background:#FEE2E2;color:#A51C30;padding:2px 8px;border-radius:10px;font-size:0.7rem;font-weight:600;">24/7 Emergency</span><br/>' : ''}
+        <button class="lf-popup-btn" onclick="openStreetView(${c.lat},${c.lng},'${c.name.replace(/'/g,"\\'")}')">
+          🚶 Street View
+        </button>
+        <a href="appointment.html?clinic=${c.id}" class="lf-popup-btn secondary" style="display:block;text-align:center;text-decoration:none;margin-top:4px;">
+          📅 Book Appointment
+        </a>
+        <a href="https://www.openstreetmap.org/directions?from=&to=${c.lat}%2C${c.lng}" target="_blank"
+          class="lf-popup-btn secondary" style="display:block;text-align:center;text-decoration:none;margin-top:4px;">
+          🗺 Get Directions
+        </a>
+      </div>`;
+
+    marker.bindPopup(popupHtml, { maxWidth: 240 });
+    marker.clinicId = c.id;
+    marker.on('click', () => {
+      highlightClinicCard(c.id);
+    });
+    marker.addTo(map);
+    clinicMarkers.push(marker);
+  });
+
+  // Fit map to show all clinic markers
+  if (clinicMarkers.length > 0 && !userLocation) {
+    const group = L.featureGroup(clinicMarkers);
+    map.fitBounds(group.getBounds().pad(0.1));
+  }
+}
+
+/* ── Render clinic list cards ────────────────────────────────── */
+function renderClinicList(filter = {}) {
+  const listEl = document.getElementById('clinic-list');
+  let clinics = [...CLINICS];
+
+  if (userLocation) {
+    clinics.forEach(c => {
+      c.distance = (c.lat && c.lng) ? distanceKm(userLocation.lat, userLocation.lng, c.lat, c.lng) : undefined;
+    });
+    clinics.sort((a, b) => (a.distance ?? 99999) - (b.distance ?? 99999));
+  }
+
+  const search = filter.search || document.getElementById('clinic-search').value;
+  const specialty = filter.specialty || document.getElementById('filter-specialty').value;
+  const emergency = filter.emergency || document.getElementById('filter-emergency').value;
+
+  if (search) { const q = search.toLowerCase(); clinics = clinics.filter(c => c.name.toLowerCase().includes(q) || c.address.toLowerCase().includes(q)); }
+  if (specialty) clinics = clinics.filter(c => c.specialty === specialty);
+  if (emergency === 'yes') clinics = clinics.filter(c => c.emergency);
+
+  if (!clinics.length) {
+    listEl.innerHTML = `<div class="card text-center" style="padding:32px;"><p>No clinics match your filters.</p></div>`;
+    return;
+  }
+
+  listEl.innerHTML = clinics.map(c => `
+    <div class="clinic-item" data-id="${c.id}">
+      <div class="clinic-card card" onclick="focusClinic('${c.id}')">
+        <div style="display:flex;gap:14px;align-items:flex-start;">
+          <div class="clinic-avatar">${c.icon}</div>
+          <div class="clinic-info">
+            <div class="clinic-name">${c.name}</div>
+            <div class="clinic-meta">📍 ${c.address}</div>
+            <div class="clinic-meta">⭐ ${c.rating.toFixed(1)} · ${c.hours}</div>
+            ${c.distance !== undefined ? `<div class="clinic-meta">📏 ${c.distance.toFixed(1)} km away</div>` : ''}
+            ${c.phone ? `<div class="clinic-meta">📞 ${c.phone}</div>` : ''}
+            <div class="mt-12" style="display:flex;gap:8px;flex-wrap:wrap;">
+              ${c.emergency ? '<span class="badge badge-severe">24/7 Emergency</span>' : ''}
+              <span class="badge badge-teal">${specialtyLabel(c.specialty)}</span>
+            </div>
+            <div class="mt-12" style="display:flex;gap:6px;flex-wrap:wrap;">
+              <a href="appointment.html?clinic=${c.id}" class="btn btn-primary btn-sm" onclick="event.stopPropagation()">Book</a>
+              <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openStreetView(${c.lat||0},${c.lng||0},'${c.name.replace(/'/g,"\\'")}')">🚶 Street View</button>
+              ${c.lat ? `<a href="https://www.openstreetmap.org/directions?from=&to=${c.lat}%2C${c.lng}" target="_blank" class="btn btn-secondary btn-sm" onclick="event.stopPropagation()">🗺 Directions</a>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function specialtyLabel(s) {
+  const m = { general:'General Dentistry', orthodontics:'Orthodontics', periodontics:'Periodontics', pediatric_dentistry:'Pediatric Dentistry', oral_surgery:'Oral Surgery', endodontics:'Endodontics', prosthodontics:'Prosthodontics', cosmetic:'Cosmetic Dentistry' };
+  return m[s] || s;
+}
+
+/* ── Focus map on a clinic when card is clicked ──────────────── */
+window.focusClinic = function(id) {
+  highlightClinicCard(id);
+  const clinic = CLINICS.find(c => c.id === id);
+  if (!clinic || !clinic.lat) return;
+  map.flyTo([clinic.lat, clinic.lng], 16, { duration: 1 });
+  const marker = clinicMarkers.find(m => m.clinicId === id);
+  if (marker) marker.openPopup();
+};
+
+function highlightClinicCard(id) {
+  document.querySelectorAll('.clinic-card').forEach(c => c.classList.remove('active'));
+  const card = document.querySelector(`.clinic-item[data-id="${id}"] .clinic-card`);
+  if (card) { card.classList.add('active'); card.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+}
+
+/* ── Filters ────────────────────────────────────────────────── */
+function applyFilters() { renderClinicList(); }
+document.getElementById('clinic-search').addEventListener('input', applyFilters);
+document.getElementById('filter-specialty').addEventListener('change', applyFilters);
+document.getElementById('filter-emergency').addEventListener('change', applyFilters);
+
+/* ── Geolocation — calls real backend nearby API ─────────────── */
+document.getElementById('btn-locate').addEventListener('click', () => {
+  if (!navigator.geolocation) { alert('Geolocation is not supported by your browser.'); return; }
+  const btn = document.getElementById('btn-locate');
+  btn.textContent = '📍 Locating…'; btn.disabled = true;
+
+  navigator.geolocation.getCurrentPosition(async pos => {
+    userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+
+    // Show user's position on map
+    if (userMarker) map.removeLayer(userMarker);
+    userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon, title: 'Your Location' })
+      .bindPopup('<strong>📍 Your Location</strong>').addTo(map);
+    map.flyTo([userLocation.lat, userLocation.lng], 13, { duration: 1.2 });
+
+    // Call geospatial backend endpoint
+    try {
+      const res = await apiFetch(`/api/clinic/nearby?latitude=${userLocation.lat}&longitude=${userLocation.lng}&maxDistance=50000&limit=20`);
+      const nearby = (res.clinics || []).map(c => ({
+        id: c._id,
+        name: c.name,
+        address: `${c.location?.address || ''}, ${c.location?.city || ''}`,
+        lat: c.location?.coordinates?.coordinates?.[1],
+        lng: c.location?.coordinates?.coordinates?.[0],
+        rating: c.ratings?.averageRating || 0,
+        hours: formatHoursToday(c.hours),
+        emergency: !!c.emergencyAvailable,
+        specialty: (c.specialties && c.specialties[0]) || 'general',
+        phone: c.contact?.phone || '',
+        icon: c.emergencyAvailable ? '⚕️' : '🏥',
+        distance: c.distance
+      }));
+      if (nearby.length > 0) { CLINICS = nearby; }
+    } catch(e) {
+      // Fallback: sort client-side by distance
+      CLINICS.forEach(c => { c.distance = (c.lat && c.lng) ? distanceKm(userLocation.lat, userLocation.lng, c.lat, c.lng) : undefined; });
+    }
+
+    renderClinicList();
+    plotClinicMarkers();
+
+    const badge = document.getElementById('location-badge');
+    badge.style.display = 'inline-flex';
+    document.getElementById('location-label').textContent = `${CLINICS.length} clinic${CLINICS.length!==1?'s':''} near you`;
+
+    btn.textContent = '📍 Use My Location'; btn.disabled = false;
+
+  }, () => {
+    alert('Could not get your location. Showing all clinics by default.');
+    btn.textContent = '📍 Use My Location'; btn.disabled = false;
+  }, { timeout: 10000 });
+});
+
+function clearLocation() {
+  userLocation = null;
+  if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
+  document.getElementById('location-badge').style.display = 'none';
+  fetchClinics(); // reload all
+  map.flyTo([9.0820, 8.6753], 6, { duration: 1 });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STREET VIEW — using Mapillary (open-source street photos)
+   and OpenStreetMap embeds. No Google API key required.
+   ═══════════════════════════════════════════════════════════════ */
+
+window.openStreetView = function(lat, lng, name) {
+  if (!lat || !lng) {
+    alert('No location coordinates available for this clinic.');
+    return;
+  }
+  currentSVLat = lat; currentSVLng = lng; currentSVName = name;
+
+  document.getElementById('sv-clinic-name').textContent = '🚶 ' + name;
+  document.getElementById('sv-panel').style.display = 'block';
+  document.getElementById('sv-no-coverage').style.display = 'none';
+  document.getElementById('sv-frame-wrap').style.display = 'block';
+
+  // Update external link
+  document.getElementById('sv-external-link').href =
+    `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`;
+
+  // Load active tab
+  loadSVTab(activeSVTab, lat, lng);
+
+  // Fly map to the clinic
+  map.flyTo([lat, lng], 17, { duration: 1 });
+
+  // Smooth scroll to panel
+  setTimeout(() => {
+    document.getElementById('sv-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 300);
+};
+
+function switchSVTab(tab, btn) {
+  activeSVTab = tab;
+  document.querySelectorAll('.sv-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (currentSVLat) loadSVTab(tab, currentSVLat, currentSVLng);
+}
+
+function loadSVTab(tab, lat, lng) {
+  const frame = document.getElementById('sv-frame');
+  document.getElementById('sv-frame-wrap').style.display = 'block';
+  document.getElementById('sv-no-coverage').style.display = 'none';
+
+  if (tab === 'mapillary') {
+    // Mapillary: open-source crowdsourced street-level photos
+    // Uses their viewer embed which shows the closest photo to the coordinates
+    frame.src = `https://www.mapillary.com/embed?map=true&lat=${lat}&lng=${lng}&z=17&style=split`;
+  } else if (tab === 'osm') {
+    // OpenStreetMap detailed street embed — shows the actual road layout
+    const bbox = 0.003; // roughly 300m
+    frame.src = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-bbox},${lat-bbox},${lng+bbox},${lat+bbox}&layer=mapnik&marker=${lat},${lng}`;
+  } else if (tab === 'satellite') {
+    // ESRI satellite imagery — free, no key needed
+    // Embed via OSM with satellite layer
+    frame.src = `https://www.bing.com/maps/embed?h=400&w=800&cp=${lat}~${lng}&lvl=18&typ=a&sty=h&src=SHELL&FORM=MBEDV8`;
+  }
+}
+
+function closeSV() {
+  document.getElementById('sv-panel').style.display = 'none';
+}
+
+/* ── Boot ────────────────────────────────────────────────────── */
+if (typeof L === 'undefined') {
+  document.getElementById('map').innerHTML =
+    '<div style="padding:48px;text-align:center;color:#888;font-size:.9rem;">' +
+    '⚠️ Map could not load — please check your internet connection and refresh.</div>';
+  fetchClinics(); // still load the clinic list cards even without the map
+} else {
+  initLeafletMap();
+  fetchClinics();
+}
+</script>
+</body>
+</html>

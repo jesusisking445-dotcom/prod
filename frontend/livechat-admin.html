@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Live Chat Reply Center — HomoDentHealth Admin</title>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg,#f8fafc); font-family:inherit; color:var(--text,#1e293b); }
+
+:root {
+  --admin-sidebar-bg: #0f2027;
+  --admin-locked: #94a3b8;
+  --whatsapp-green: #25d366;
+  --whatsapp-green-dark: #128c4a;
+}
+
+.admin-shell { display:flex; height:100vh; overflow:hidden; }
+
+/* ── Sidebar (shared with content-admin.html) ── */
+.admin-sidebar { width:248px; flex-shrink:0; background:var(--admin-sidebar-bg); color:#e2e8f0; display:flex; flex-direction:column; height:100vh; overflow-y:auto; }
+.admin-sidebar .brand { display:flex; align-items:center; gap:10px; padding:20px 18px; border-bottom:1px solid rgba(255,255,255,0.08); }
+.admin-sidebar .brand .tooth { font-size:1.5rem; }
+.admin-sidebar .brand b { font-size:1rem; }
+.admin-sidebar .brand span.tag { display:block; font-size:0.68rem; color:#7dd3c0; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; }
+.role-pill { margin:14px 18px; padding:8px 12px; background:rgba(125,211,192,0.12); border:1px solid rgba(125,211,192,0.35); border-radius:var(--radius,10px); font-size:0.72rem; font-weight:700; color:#7dd3c0; text-transform:uppercase; letter-spacing:0.04em; }
+.admin-nav { padding:6px 12px; flex:1; }
+.admin-nav a { display:flex; align-items:center; gap:10px; padding:10px 12px; margin-bottom:2px; border-radius:var(--radius,10px); color:#cbd5e1; text-decoration:none; font-size:0.875rem; font-weight:500; transition:all 0.15s; cursor:pointer; }
+.admin-nav a:hover { background:rgba(255,255,255,0.06); color:#fff; }
+.admin-nav a.active { background:var(--primary,#0d9488); color:#fff; }
+.admin-nav a.locked { color:var(--admin-locked); cursor:not-allowed; }
+.admin-nav a.locked:hover { background:transparent; color:var(--admin-locked); }
+.admin-nav .nav-icon { width:20px; text-align:center; }
+.admin-nav .lock-icon { margin-left:auto; font-size:0.75rem; opacity:0.7; }
+.nav-divider { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#5b7480; padding:18px 14px 6px; }
+.sidebar-foot { padding:14px 18px; border-top:1px solid rgba(255,255,255,0.08); font-size:0.72rem; color:#7991a0; }
+
+/* ── Main ── */
+.admin-main { flex:1; min-width:0; display:flex; flex-direction:column; height:100vh; }
+.admin-topbar { display:flex; align-items:center; justify-content:space-between; padding:14px 24px; background:#fff; border-bottom:1px solid var(--border,#e2e8f0); flex-shrink:0; }
+.admin-topbar h1 { font-size:1.2rem; margin:0; }
+.topbar-right { display:flex; align-items:center; gap:14px; }
+.conn-pill { display:flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; background:#ecfdf5; color:var(--whatsapp-green-dark); font-size:0.78rem; font-weight:700; }
+.conn-dot { width:8px; height:8px; border-radius:50%; background:var(--whatsapp-green); box-shadow:0 0 0 0 rgba(37,211,102,0.6); animation:pulse 2s infinite; }
+@keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(37,211,102,0.5);} 70%{box-shadow:0 0 0 7px rgba(37,211,102,0);} 100%{box-shadow:0 0 0 0 rgba(37,211,102,0);} }
+.bell-wrap { position:relative; cursor:pointer; font-size:1.2rem; }
+.bell-badge { position:absolute; top:-6px; right:-8px; background:#dc2626; color:#fff; font-size:0.62rem; font-weight:800; min-width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; padding:0 3px; }
+.demo-btn { font-size:0.74rem; padding:6px 12px; border-radius:999px; border:1.5px dashed var(--secondary,#0891b2); background:#fff; color:var(--secondary,#0891b2); cursor:pointer; font-weight:700; }
+.demo-btn:hover { background:var(--light-teal,#e6f7f5); }
+
+/* ── 3-column chat layout ── */
+.chat-shell { flex:1; display:flex; min-height:0; }
+
+.conv-pane { width:300px; flex-shrink:0; border-right:1px solid var(--border,#e2e8f0); background:#fff; display:flex; flex-direction:column; }
+.conv-search { padding:14px; border-bottom:1px solid var(--border,#e2e8f0); }
+.conv-search input { width:100%; padding:8px 12px; border:1.5px solid var(--border,#e2e8f0); border-radius:var(--radius,10px); font-size:0.83rem; outline:none; }
+.conv-search input:focus { border-color:var(--primary,#0d9488); }
+.chan-filters { display:flex; gap:6px; padding:0 14px 12px; }
+.chan-chip { font-size:0.7rem; font-weight:700; padding:5px 10px; border-radius:999px; border:1.5px solid var(--border,#e2e8f0); background:#fff; cursor:pointer; }
+.chan-chip.active { border-color:var(--primary,#0d9488); background:var(--light-teal,#e6f7f5); color:var(--primary,#0d9488); }
+.conv-list { flex:1; overflow-y:auto; }
+.conv-item { display:flex; gap:10px; padding:12px 14px; cursor:pointer; border-bottom:1px solid #f1f5f9; position:relative; }
+.conv-item:hover { background:var(--bg,#f8fafc); }
+.conv-item.active { background:var(--light-teal,#e6f7f5); }
+.conv-avatar { width:38px; height:38px; border-radius:50%; background:var(--light-teal,#e6f7f5); color:var(--primary,#0d9488); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0; }
+.conv-info { flex:1; min-width:0; }
+.conv-top-row { display:flex; justify-content:space-between; gap:6px; }
+.conv-name { font-size:0.86rem; font-weight:700; }
+.conv-time { font-size:0.68rem; color:var(--text-muted,#64748b); flex-shrink:0; }
+.conv-preview { font-size:0.78rem; color:var(--text-muted,#64748b); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:190px; }
+.conv-chan { font-size:0.65rem; }
+.unread-dot { position:absolute; right:14px; top:50%; transform:translateY(-50%); width:9px; height:9px; border-radius:50%; background:var(--whatsapp-green); }
+.new-flash { animation:flash 1.4s ease; }
+@keyframes flash { 0%{background:#fef3c7;} 100%{background:transparent;} }
+
+.thread-pane { flex:1; display:flex; flex-direction:column; min-width:0; background:#f4f7f8; }
+.thread-header { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; background:#fff; border-bottom:1px solid var(--border,#e2e8f0); }
+.thread-header .who { display:flex; align-items:center; gap:10px; }
+.thread-header h3 { margin:0; font-size:0.95rem; }
+.thread-header .sub { font-size:0.74rem; color:var(--text-muted,#64748b); }
+.thread-messages { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:10px; }
+.msg-bubble { max-width:62%; padding:10px 14px; border-radius:14px; font-size:0.86rem; line-height:1.45; position:relative; }
+.msg-in { align-self:flex-start; background:#fff; border:1px solid var(--border,#e2e8f0); border-bottom-left-radius:4px; }
+.msg-out { align-self:flex-end; background:var(--primary,#0d9488); color:#fff; border-bottom-right-radius:4px; }
+.msg-time { font-size:0.65rem; opacity:0.65; margin-top:4px; display:block; }
+.thread-empty { flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; color:var(--text-muted,#64748b); gap:8px; }
+.quick-reply-row { padding:8px 16px 0; }
+.quick-reply-row select { width:100%; padding:7px 10px; border:1.5px solid var(--border,#e2e8f0); border-radius:var(--radius,10px); font-size:0.78rem; color:var(--text-muted,#64748b); }
+.composer { display:flex; gap:10px; padding:14px 16px; background:#fff; border-top:1px solid var(--border,#e2e8f0); }
+.composer textarea { flex:1; resize:none; border:1.5px solid var(--border,#e2e8f0); border-radius:var(--radius,10px); padding:10px 14px; font-size:0.875rem; font-family:inherit; outline:none; height:44px; }
+.composer textarea:focus { border-color:var(--primary,#0d9488); }
+.send-btn { background:var(--primary,#0d9488); color:#fff; border:none; border-radius:var(--radius,10px); padding:0 18px; font-weight:700; cursor:pointer; font-size:0.85rem; }
+.send-btn:hover { opacity:0.92; }
+
+.ctx-pane { width:270px; flex-shrink:0; border-left:1px solid var(--border,#e2e8f0); background:#fff; padding:18px; overflow-y:auto; }
+.ctx-pane h4 { margin:0 0 4px; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted,#64748b); }
+.ctx-name { font-size:1.05rem; font-weight:700; margin-bottom:2px; }
+.ctx-row { font-size:0.82rem; color:var(--text-muted,#64748b); margin-bottom:14px; }
+.ctx-card { background:var(--bg,#f8fafc); border-radius:var(--radius,10px); padding:12px; margin-bottom:14px; font-size:0.82rem; }
+.ctx-card b { display:block; font-size:0.78rem; margin-bottom:3px; }
+.ctx-notes textarea { width:100%; border:1.5px solid var(--border,#e2e8f0); border-radius:var(--radius,10px); padding:8px 10px; font-size:0.8rem; font-family:inherit; outline:none; resize:vertical; min-height:70px; }
+.ctx-restrict { font-size:0.72rem; color:var(--text-muted,#64748b); background:#fef3c7; border-radius:8px; padding:8px 10px; margin-top:16px; }
+
+.toast { position:fixed; bottom:24px; right:24px; background:#0f2027; color:#fff; padding:12px 20px; border-radius:var(--radius,10px); font-size:0.85rem; box-shadow:0 8px 24px rgba(0,0,0,0.2); opacity:0; transform:translateY(10px); transition:all 0.25s; pointer-events:none; z-index:200; }
+.toast.show { opacity:1; transform:translateY(0); }
+
+@media (max-width:1100px) { .ctx-pane { display:none; } }
+@media (max-width:780px) {
+  .admin-sidebar { display:none; }
+  .conv-pane { width:240px; }
+}
+</style>
+</head>
+<body>
+
+<div class="admin-shell">
+
+  <!-- ══════════════ SIDEBAR ══════════════ -->
+  <aside class="admin-sidebar">
+    <div class="brand">
+      <img src="images/logo.png" alt="HomoDentHealth" style="height:34px;object-fit:contain;" />
+      <div><b>HomoDentHealth</b><span class="tag">Admin Panel</span></div>
+    </div>
+    <div class="role-pill">👤 Content &amp; Support Admin</div>
+
+    <nav class="admin-nav">
+      <a href="content-admin.html#dashboard"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="content-admin.html#content"><span class="nav-icon">📝</span> Blog &amp; Content</a>
+      <a href="content-admin.html#videos"><span class="nav-icon">🎬</span> Video Library</a>
+      <a class="active"><span class="nav-icon">💬</span> Live Chat Center</a>
+
+      <div class="nav-divider">Super Admin Only</div>
+      <a class="locked" onclick="lockedClick(event)"><span class="nav-icon">🦷</span> Patient Records <span class="lock-icon">🔒</span></a>
+      <a class="locked" onclick="lockedClick(event)"><span class="nav-icon">🏥</span> Clinics &amp; Dentists <span class="lock-icon">🔒</span></a>
+      <a class="locked" onclick="lockedClick(event)"><span class="nav-icon">👥</span> User Management <span class="lock-icon">🔒</span></a>
+      <a class="locked" onclick="lockedClick(event)"><span class="nav-icon">⚙️</span> System Settings <span class="lock-icon">🔒</span></a>
+    </nav>
+
+    <div class="sidebar-foot">© 2026 HomoDentHealth<br/>Signed in as Content &amp; Support Admin</div>
+  </aside>
+
+  <!-- ══════════════ MAIN ══════════════ -->
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <h1>💬 Live Chat Reply Center</h1>
+      <div class="topbar-right">
+        <div class="conn-pill" title="WhatsApp Business API isn't connected yet — only website chat is live"><span class="conn-dot" style="background:#D97706;"></span> WhatsApp: Not Connected</div>
+        <div class="bell-wrap" onclick="jumpToUnread()">
+          🔔<span class="bell-badge" id="bell-badge" style="display:none;">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-shell">
+
+      <!-- ── Conversation list ── -->
+      <div class="conv-pane">
+        <div class="conv-search">
+          <input type="text" id="conv-search" placeholder="🔍 Search conversations..." oninput="renderConvList()"/>
+        </div>
+        <div class="chan-filters">
+          <div class="chan-chip active" data-chan="" onclick="setChanFilter('', this)">All</div>
+          <div class="chan-chip" data-chan="whatsapp" onclick="setChanFilter('whatsapp', this)">🟢 WhatsApp</div>
+          <div class="chan-chip" data-chan="website" onclick="setChanFilter('website', this)">🌐 Website</div>
+        </div>
+        <div class="conv-list" id="conv-list"></div>
+      </div>
+
+      <!-- ── Active thread ── -->
+      <div class="thread-pane" id="thread-pane">
+        <div class="thread-empty" id="thread-empty">
+          <div style="font-size:2.2rem;">💬</div>
+          <div>Select a conversation to start replying</div>
+        </div>
+
+        <div id="thread-active" style="display:none; flex:1; display:flex; flex-direction:column; min-height:0;">
+          <div class="thread-header">
+            <div class="who">
+              <div class="conv-avatar" id="th-avatar"></div>
+              <div>
+                <h3 id="th-name"></h3>
+                <div class="sub" id="th-sub"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="thread-messages" id="thread-messages"></div>
+
+          <div class="quick-reply-row">
+            <select id="quick-reply" onchange="useQuickReply()">
+              <option value="">💡 Insert a quick reply template…</option>
+              <option value="Thanks for reaching out to HomoDentHealth! How can we help you today?">Greeting</option>
+              <option value="You can book an appointment directly through our Find Clinics page on the website.">Booking info</option>
+              <option value="Our clinic partners are open Monday–Saturday, 8am–6pm.">Clinic hours</option>
+              <option value="For a quick preliminary check, try our free Symptom Assessment tool on the website — it only takes about 3 minutes.">Suggest assessment</option>
+              <option value="Thanks for the details. A member of our dental team will follow up with you shortly.">Hand-off to dentist</option>
+            </select>
+          </div>
+
+          <div class="composer">
+            <textarea id="composer-input" placeholder="Type a reply..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendReply();}"></textarea>
+            <button class="send-btn" onclick="sendReply()">Send →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Patient context panel ── -->
+      <div class="ctx-pane" id="ctx-pane" style="display:none;">
+        <h4>Patient</h4>
+        <div class="ctx-name" id="ctx-name"></div>
+        <div class="ctx-row" id="ctx-phone"></div>
+
+        <div class="ctx-card">
+          <b>Last Symptom Assessment</b>
+          <span id="ctx-assessment"></span>
+        </div>
+        <div class="ctx-card">
+          <b>Appointment Status</b>
+          <span id="ctx-appointment"></span>
+        </div>
+
+        <!-- Feature 18: Agent Assignment -->
+        <h4>Assigned Agent</h4>
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          <select id="ctx-agent-select" style="flex:1;border:1.5px solid var(--border,#e2e8f0);border-radius:var(--radius,10px);padding:7px 10px;font-size:0.82rem;outline:none;">
+            <option value="">— Unassigned —</option>
+          </select>
+          <button onclick="assignAgent()" class="btn btn-primary btn-sm" style="flex-shrink:0;">Assign</button>
+        </div>
+        <div id="ctx-assigned-label" style="font-size:.78rem;color:var(--text-muted,#64748b);margin-bottom:14px;"></div>
+
+        <h4>Internal Notes</h4>
+        <div class="ctx-notes">
+          <textarea id="ctx-notes-input" placeholder="Notes visible only to support staff..." onblur="saveNotes()"></textarea>
+        </div>
+
+        <div class="ctx-restrict">🔒 Full medical records, appointment editing, and patient account changes require Super Admin access.</div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Feature 4 + 18: Socket.io real-time + agent assignment -->
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="config.js"></script>
+<script src="main.js"></script>
+<script>
+requireAuth(['admin',  'live_chat_agent'],);
+/* ════════════════════════════════════════════════════════════════
+   LIVE CHAT REPLY CENTER — wired to the real backend.
+
+   Conversations are created by patients/guests via the chat widget
+   on contact.html (POST /api/chat/conversations), and replied to
+   here via POST /api/admin/chat/conversations/:id/reply.
+
+   WhatsApp channel support exists in the data model for future use,
+   but no WhatsApp Business API webhook is connected in this build —
+   the WhatsApp filter will simply show no conversations until that
+   integration is added server-side.
+   ════════════════════════════════════════════════════════════════ */
+
+const LS_NOTES = 'dca_chat_notes'; // internal notes stay local — no backend field for these yet
+let activeConvoId = null;
+let chanFilter = '';
+let conversationsCache = [];
+let activeMessagesCache = [];
+
+function convoName(c) {
+  if (c.user) return `${c.user.firstName || ''} ${c.user.lastName || ''}`.trim() || c.user.email;
+  return c.guestName || 'Guest visitor';
+}
+function convoContact(c) {
+  return c.user ? c.user.email : (c.guestEmail || 'No account');
+}
+
+/* ───────────────────────── Data layer (real backend) ───────────────────────── */
+async function fetchConversations() {
+  try {
+    const res = await apiFetch('/api/admin/chat/conversations?limit=100');
+    conversationsCache = res.conversations || [];
+  } catch (e) {
+    conversationsCache = [];
+  }
+  return conversationsCache;
+}
+
+async function fetchMessages(id) {
+  const res = await apiFetch(`/api/admin/chat/conversations/${id}/messages`);
+  return res.messages || [];
+}
+
+/* ───────────────────────── Rendering: conversation list ───────────────────────── */
+function setChanFilter(chan, el) {
+  chanFilter = chan;
+  document.querySelectorAll('.chan-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderConvList();
+}
+
+function renderConvList() {
+  const search = (document.getElementById('conv-search').value || '').toLowerCase();
+  let convos = conversationsCache
+    .filter(c => (!chanFilter || c.channel === chanFilter))
+    .filter(c => (!search || convoName(c).toLowerCase().includes(search)))
+    .sort((a, b) => new Date(b.lastMessage?.timestamp || b.createdAt) - new Date(a.lastMessage?.timestamp || a.createdAt));
+
+  const list = document.getElementById('conv-list');
+  if (!convos.length) {
+    list.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:0.85rem;">No conversations${chanFilter ? ' on this channel' : ''} yet.</div>`;
+    updateBellBadge();
+    return;
+  }
+  list.innerHTML = '';
+  convos.forEach(c => {
+    const name = convoName(c);
+    const div = document.createElement('div');
+    div.className = 'conv-item' + (c._id === activeConvoId ? ' active' : '');
+    div.onclick = () => openConversation(c._id);
+    div.innerHTML = `
+      <div class="conv-avatar">${initials(name)}</div>
+      <div class="conv-info">
+        <div class="conv-top-row">
+          <span class="conv-name">${escapeHtml(name)}</span>
+          <span class="conv-time">${c.lastMessage ? timeAgo(c.lastMessage.timestamp) : timeAgo(c.createdAt)}</span>
+        </div>
+        <div class="conv-preview">${c.lastMessage ? escapeHtml(c.lastMessage.content) : 'No messages yet'}</div>
+        <span class="conv-chan">${c.channel === 'whatsapp' ? '🟢 WhatsApp' : '🌐 Website'}</span>
+      </div>
+      ${c.status === 'open' || c.status === 'waiting' ? '<div class="unread-dot"></div>' : ''}`;
+    list.appendChild(div);
+  });
+  updateBellBadge();
+}
+
+function initials(name) { return (name || '?').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase(); }
+function timeAgo(ts) {
+  const mins = Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return mins + 'm';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h';
+  return Math.floor(hrs / 24) + 'd';
+}
+function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+
+/* ───────────────────────── Active thread ───────────────────────── */
+async function openConversation(id) {
+  activeConvoId = id;
+  const c = conversationsCache.find(x => x._id === id);
+  if (!c) return;
+
+  document.getElementById('thread-empty').style.display = 'none';
+  document.getElementById('thread-active').style.display = 'flex';
+  document.getElementById('ctx-pane').style.display = 'block';
+
+  const name = convoName(c);
+  document.getElementById('th-avatar').textContent = initials(name);
+  document.getElementById('th-name').textContent = name;
+  document.getElementById('th-sub').textContent = (c.channel === 'whatsapp' ? '🟢 WhatsApp' : '🌐 Website chat') + ' · ' + convoContact(c);
+
+  document.getElementById('ctx-name').textContent = name;
+  document.getElementById('ctx-phone').textContent = convoContact(c);
+  document.getElementById('ctx-assessment').textContent = c.subject || c.category || 'General inquiry';
+  document.getElementById('ctx-appointment').textContent = c.status;
+  const notes = JSON.parse(localStorage.getItem(LS_NOTES) || '{}');
+  document.getElementById('ctx-notes-input').value = notes[id] || '';
+
+  await loadAndRenderMessages(id);
+  renderConvList();
+}
+
+async function loadAndRenderMessages(id) {
+  try {
+    activeMessagesCache = await fetchMessages(id);
+    renderMessages(activeMessagesCache);
+  } catch (e) {
+    document.getElementById('thread-messages').innerHTML = `<p style="padding:20px;color:var(--text-muted);">Could not load messages.</p>`;
+  }
+}
+
+function renderMessages(messages) {
+  const wrap = document.getElementById('thread-messages');
+  wrap.innerHTML = '';
+  messages.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'msg-bubble ' + (m.senderRole === 'admin' ? 'msg-out' : 'msg-in');
+    div.innerHTML = `${escapeHtml(m.content)}<span class="msg-time">${new Date(m.createdAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>`;
+    wrap.appendChild(div);
+  });
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function useQuickReply() {
+  const sel = document.getElementById('quick-reply');
+  if (sel.value) {
+    document.getElementById('composer-input').value = sel.value;
+    sel.value = '';
+    document.getElementById('composer-input').focus();
+  }
+}
+
+async function sendReply() {
+  const input = document.getElementById('composer-input');
+  const text = input.value.trim();
+  if (!text || !activeConvoId) return;
+  input.value = '';
+  input.disabled = true;
+
+  try {
+    await apiFetch(`/api/admin/chat/conversations/${activeConvoId}/reply`, {
+      method: 'POST',
+      body: JSON.stringify({ content: text })
+    });
+    await loadAndRenderMessages(activeConvoId);
+    await fetchConversations();
+    renderConvList();
+  } catch (e) {
+    alert(e.message || 'Could not send reply.');
+    input.value = text;
+  } finally {
+    input.disabled = false;
+    input.focus();
+  }
+}
+
+/* ───────────────────────── Notes (kept local — internal scratchpad) ───────────────────────── */
+function saveNotes() {
+  if (!activeConvoId) return;
+  const notes = JSON.parse(localStorage.getItem(LS_NOTES) || '{}');
+  notes[activeConvoId] = document.getElementById('ctx-notes-input').value;
+  localStorage.setItem(LS_NOTES, JSON.stringify(notes));
+}
+
+/* ───────────────────────── Bell / unread ───────────────────────── */
+function updateBellBadge() {
+  const total = conversationsCache.filter(c => c.status === 'open' || c.status === 'waiting').length;
+  const badge = document.getElementById('bell-badge');
+  badge.textContent = total;
+  badge.style.display = total > 0 ? 'flex' : 'none';
+}
+function jumpToUnread() {
+  const c = conversationsCache.find(c => c.status === 'open' || c.status === 'waiting');
+  if (c) openConversation(c._id);
+}
+
+function lockedClick(e) {
+  e.preventDefault();
+  showToast('🔒 This section requires Super Admin access.');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ─── Feature 18: Assign agent ───────────────────────────────── */
+let agentsCache = [];
+
+async function loadAgents() {
+  try {
+    const res = await apiFetch('/api/admin/agents');
+    agentsCache = res.agents || res.users || [];
+    const sel = document.getElementById('ctx-agent-select');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Unassigned —</option>' +
+      agentsCache.map(a => `<option value="${a._id}">${a.firstName} ${a.lastName}</option>`).join('');
+  } catch (e) { /* agents list optional */ }
+}
+
+async function assignAgent() {
+  if (!activeConvoId) return;
+  const agentId = document.getElementById('ctx-agent-select').value;
+  try {
+    const res = await apiFetch(`/api/admin/chat/conversations/${activeConvoId}/assign`, {
+      method: 'PATCH',
+      body: JSON.stringify({ agentId: agentId || null })
+    });
+    const agent = agentsCache.find(a => a._id === agentId);
+    document.getElementById('ctx-assigned-label').textContent = agentId
+      ? `✅ Assigned to ${agent ? agent.firstName + ' ' + agent.lastName : agentId}`
+      : '⬜ Unassigned';
+    showToast(agentId ? `Assigned to ${agent ? agent.firstName : 'agent'}` : 'Unassigned');
+    // Update local cache
+    const c = conversationsCache.find(x => x._id === activeConvoId);
+    if (c) c.assignedAgent = agentId ? { _id: agentId } : null;
+  } catch (e) {
+    showToast('Could not assign agent: ' + (e.message || 'Unknown error'));
+  }
+}
+
+/* ─── Feature 4: Socket.io real-time (replaces 6-second polling) ── */
+let adminSocket = null;
+
+function initAdminSocket() {
+  const apiBase = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 'http://localhost:4000';
+  const token = localStorage.getItem('hd_token') || localStorage.getItem('dc_token') || '';
+  adminSocket = io(apiBase, {
+    auth: token ? { token } : {},
+    transports: ['websocket', 'polling']
+  });
+
+  adminSocket.on('connect', () => showToast('🟢 Real-time chat connected'));
+  adminSocket.on('disconnect', () => showToast('🔴 Chat disconnected — reconnecting…'));
+
+  // New message in any open conversation
+  adminSocket.on('new-message', async (msg) => {
+    // Update conversation list badge
+    await fetchConversations();
+    renderConvList();
+    // If it's in the active thread, render it immediately
+    if (msg.conversationId === activeConvoId) {
+      const div = document.createElement('div');
+      div.className = 'msg-bubble ' + (msg.senderRole === 'admin' ? 'msg-out' : 'msg-in');
+      div.innerHTML = `${escapeHtml(msg.content)}<span class="msg-time">${new Date(msg.createdAt || Date.now()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>`;
+      const wrap = document.getElementById('thread-messages');
+      wrap.appendChild(div);
+      wrap.scrollTop = wrap.scrollHeight;
+      activeMessagesCache.push(msg);
+    }
+  });
+
+  // Typing indicator from patient
+  adminSocket.on('typing', ({ conversationId }) => {
+    if (conversationId !== activeConvoId) return;
+    let ind = document.getElementById('patient-typing-ind');
+    if (!ind) {
+      ind = document.createElement('div');
+      ind.id = 'patient-typing-ind';
+      ind.className = 'msg-bubble msg-in';
+      ind.style.cssText = 'opacity:.6;font-style:italic;font-size:.78rem;';
+      ind.textContent = 'Patient is typing…';
+      document.getElementById('thread-messages').appendChild(ind);
+    }
+    document.getElementById('thread-messages').scrollTop = 99999;
+  });
+  adminSocket.on('stop-typing', () => {
+    const ind = document.getElementById('patient-typing-ind');
+    if (ind) ind.remove();
+  });
+}
+
+/* Override sendReply to use Socket.io */
+async function sendReply() {
+  const input = document.getElementById('composer-input');
+  const text = input.value.trim();
+  if (!text || !activeConvoId) return;
+  input.value = '';
+  input.disabled = true;
+
+  // Optimistic render
+  const wrap = document.getElementById('thread-messages');
+  const optDiv = document.createElement('div');
+  optDiv.className = 'msg-bubble msg-out';
+  optDiv.innerHTML = `${escapeHtml(text)}<span class="msg-time">Sending…</span>`;
+  wrap.appendChild(optDiv);
+  wrap.scrollTop = wrap.scrollHeight;
+
+  try {
+    if (adminSocket && adminSocket.connected) {
+      adminSocket.emit('send-message', { conversationId: activeConvoId, content: text });
+      optDiv.querySelector('.msg-time').textContent = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    } else {
+      await apiFetch(`/api/admin/chat/conversations/${activeConvoId}/reply`, {
+        method: 'POST', body: JSON.stringify({ content: text })
+      });
+      optDiv.querySelector('.msg-time').textContent = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    }
+    await fetchConversations();
+    renderConvList();
+  } catch (e) {
+    alert(e.message || 'Could not send reply.');
+    optDiv.remove();
+    input.value = text;
+  } finally {
+    input.disabled = false;
+    input.focus();
+  }
+}
+
+/* Override openConversation to join socket room and show assignment */
+const _origOpen = openConversation;
+window.openConversation = async function(id) {
+  await _origOpen(id);
+  // Join socket room for this conversation
+  if (adminSocket) adminSocket.emit('join-chat', { conversationId: id });
+  // Show current assignment
+  const c = conversationsCache.find(x => x._id === id);
+  const sel = document.getElementById('ctx-agent-select');
+  const lbl = document.getElementById('ctx-assigned-label');
+  if (sel && c) {
+    sel.value = c.assignedAgent?._id || c.assignedAgent || '';
+    lbl.textContent = c.assignedAgent ? `Currently: ${c.assignedAgent.firstName || c.assignedAgent} ${c.assignedAgent.lastName || ''}` : '';
+  }
+};
+
+/* ── Init ───────────────────────────────────────────────────── */
+async function refresh() {
+  await fetchConversations();
+  renderConvList();
+  if (activeConvoId) await loadAndRenderMessages(activeConvoId);
+}
+refresh();
+loadAgents();
+initAdminSocket();
+// Keep polling as a fallback for missed events (longer interval now that Socket.io is primary)
+setInterval(refresh, 30000);
+</script>
+</body>
+</html>

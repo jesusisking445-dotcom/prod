@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://YOUR-DOMAIN-HERE.com/</loc>
+    <priority>1.00</priority>
+  </url>
+  <url>
+    <loc>https://YOUR-DOMAIN-HERE.com/about</loc>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://YOUR-DOMAIN-HERE.com/services</loc>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://YOUR-DOMAIN-HERE.com/clinics</loc>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://YOUR-DOMAIN-HERE.com/blog</loc>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://YOUR-DOMAIN-HERE.com/contact</loc>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://YOUR-DOMAIN-HERE.com/assessment</loc>
+    <priority>0.70</priority>
+  </url>
+  <url>
+    <loc>https://YOUR-DOMAIN-HERE.com/auth</loc>
+    <priority>0.70</priority>
+  </url>
+</urlset>

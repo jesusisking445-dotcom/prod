@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Content &amp; Video Manager — HomoDentHealth Admin</title>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+/* ============================================================
+   ADMIN SHELL — uses the site's existing CSS variables when
+   present (via styles.css), falls back to a matching teal
+   palette when this page is opened standalone.
+   ============================================================ */
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg,#f8fafc); font-family:inherit; color:var(--text,#1e293b); }
+
+:root {
+  --admin-sidebar-bg: #0f2027;
+  --admin-sidebar-bg-2: #16323a;
+  --admin-danger: #dc2626;
+  --admin-danger-bg: #fef2f2;
+  --admin-locked: #94a3b8;
+}
+
+.admin-shell { display:flex; min-height:100vh; }
+
+/* ── Sidebar ── */
+.admin-sidebar {
+  width: 248px; flex-shrink:0; background:var(--admin-sidebar-bg);
+  color:#e2e8f0; display:flex; flex-direction:column;
+  position:sticky; top:0; height:100vh; overflow-y:auto;
+}
+.admin-sidebar .brand {
+  display:flex; align-items:center; gap:10px; padding:20px 18px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.admin-sidebar .brand .tooth { font-size:1.5rem; }
+.admin-sidebar .brand b { font-size:1rem; }
+.admin-sidebar .brand span.tag { display:block; font-size:0.68rem; color:#7dd3c0; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; }
+.role-pill {
+  margin:14px 18px; padding:8px 12px; background:rgba(125,211,192,0.12);
+  border:1px solid rgba(125,211,192,0.35); border-radius:var(--radius,10px);
+  font-size:0.72rem; font-weight:700; color:#7dd3c0; text-transform:uppercase; letter-spacing:0.04em;
+}
+.admin-nav { padding:6px 12px; flex:1; }
+.admin-nav a {
+  display:flex; align-items:center; gap:10px; padding:10px 12px; margin-bottom:2px;
+  border-radius:var(--radius,10px); color:#cbd5e1; text-decoration:none;
+  font-size:0.875rem; font-weight:500; transition:all 0.15s; cursor:pointer;
+}
+.admin-nav a:hover { background:rgba(255,255,255,0.06); color:#fff; }
+.admin-nav a.active { background:var(--primary,#0d9488); color:#fff; }
+.admin-nav a.locked { color:var(--admin-locked); cursor:not-allowed; }
+.admin-nav a.locked:hover { background:transparent; color:var(--admin-locked); }
+.admin-nav .nav-icon { width:20px; text-align:center; }
+.admin-nav .lock-icon { margin-left:auto; font-size:0.75rem; opacity:0.7; }
+.nav-divider { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#5b7480; padding:18px 14px 6px; }
+.sidebar-foot { padding:14px 18px; border-top:1px solid rgba(255,255,255,0.08); font-size:0.72rem; color:#7991a0; }
+
+/* ── Main area ── */
+.admin-main { flex:1; min-width:0; }
+.admin-topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 28px; background:#fff; border-bottom:1px solid var(--border,#e2e8f0);
+  position:sticky; top:0; z-index:10;
+}
+.admin-topbar h1 { font-size:1.25rem; margin:0; }
+.admin-topbar p { margin:2px 0 0; font-size:0.8rem; color:var(--text-muted,#64748b); }
+.user-chip { display:flex; align-items:center; gap:10px; }
+.user-avatar {
+  width:36px; height:36px; border-radius:50%; background:var(--light-teal,#e6f7f5);
+  color:var(--primary,#0d9488); display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:0.85rem;
+}
+.admin-content { padding:28px; max-width:1200px; }
+
+/* ── Stat cards ── */
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; margin-bottom:28px; }
+.stat-card {
+  background:#fff; border:1px solid var(--border,#e2e8f0); border-radius:var(--radius-lg,16px);
+  padding:18px 20px;
+}
+.stat-card .stat-num { font-size:1.7rem; font-weight:800; color:var(--primary,#0d9488); }
+.stat-card .stat-label { font-size:0.78rem; color:var(--text-muted,#64748b); font-weight:600; margin-top:2px; }
+
+/* ── Section toggle ── */
+.admin-section { display:none; }
+.admin-section.active { display:block; }
+.section-toolbar { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
+.section-toolbar h2 { margin:0; font-size:1.3rem; }
+.toolbar-filters { display:flex; gap:10px; flex-wrap:wrap; }
+.toolbar-filters input, .toolbar-filters select {
+  padding:8px 12px; border:1.5px solid var(--border,#e2e8f0); border-radius:var(--radius,10px);
+  font-size:0.83rem; outline:none;
+}
+.toolbar-filters input:focus, .toolbar-filters select:focus { border-color:var(--primary,#0d9488); }
+
+/* ── Table (Blog) ── */
+.admin-table { width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--border,#e2e8f0); border-radius:var(--radius-lg,16px); overflow:hidden; }
+.admin-table th { text-align:left; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-muted,#64748b); background:var(--bg,#f8fafc); padding:12px 16px; border-bottom:1px solid var(--border,#e2e8f0); }
+.admin-table td { padding:12px 16px; border-bottom:1px solid var(--border,#e2e8f0); font-size:0.86rem; vertical-align:middle; }
+.admin-table tr:last-child td { border-bottom:none; }
+.thumb-cell { display:flex; align-items:center; gap:10px; }
+.thumb-cell img, .thumb-fallback {
+  width:44px; height:44px; border-radius:8px; object-fit:cover; flex-shrink:0; background:var(--light-teal,#e6f7f5);
+  display:flex; align-items:center; justify-content:center; font-size:1.2rem;
+}
+.badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; }
+.badge-published { background:#dcfce7; color:#15803d; }
+.badge-draft { background:#fef3c7; color:#92400e; }
+.row-actions { display:flex; gap:6px; }
+.icon-btn {
+  width:30px; height:30px; border-radius:8px; border:1px solid var(--border,#e2e8f0); background:#fff;
+  cursor:pointer; font-size:0.85rem; display:flex; align-items:center; justify-content:center; transition:all 0.15s;
+}
+.icon-btn:hover { background:var(--light-teal,#e6f7f5); border-color:var(--secondary,#0891b2); }
+.icon-btn.danger:hover { background:var(--admin-danger-bg); border-color:var(--admin-danger); }
+
+/* ── Video grid ── */
+.video-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
+.video-card { background:#fff; border:1px solid var(--border,#e2e8f0); border-radius:var(--radius-lg,16px); overflow:hidden; }
+.video-thumb {
+  position:relative; aspect-ratio:16/9; background:linear-gradient(135deg,var(--light-teal,#e6f7f5),#fff);
+  display:flex; align-items:center; justify-content:center; font-size:2rem; overflow:hidden;
+}
+.video-thumb img { width:100%; height:100%; object-fit:cover; }
+.video-play-overlay {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,0.15); opacity:0; transition:opacity 0.2s; cursor:pointer;
+}
+.video-card:hover .video-play-overlay { opacity:1; }
+.video-play-overlay span { width:46px; height:46px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:1.1rem; }
+.video-body { padding:14px 16px; }
+.video-body h4 { margin:0 0 4px; font-size:0.92rem; }
+.video-meta { display:flex; align-items:center; gap:8px; margin-top:8px; }
+.src-badge { font-size:0.66rem; font-weight:700; text-transform:uppercase; padding:2px 8px; border-radius:999px; background:var(--light-teal,#e6f7f5); color:var(--primary,#0d9488); }
+
+/* ── Modal ── */
+.modal-overlay { position:fixed; inset:0; background:rgba(15,32,39,0.55); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; }
+.modal-overlay.open { display:flex; }
+.modal-box { background:#fff; border-radius:var(--radius-lg,16px); width:100%; max-width:560px; max-height:90vh; overflow-y:auto; padding:26px; }
+.modal-box h3 { margin-top:0; }
+.modal-close { float:right; cursor:pointer; font-size:1.3rem; line-height:1; color:var(--text-muted,#64748b); background:none; border:none; }
+.field-row { margin-bottom:16px; }
+.field-row label { display:block; font-size:0.84rem; font-weight:600; margin-bottom:6px; }
+.field-row input[type="text"], .field-row input[type="url"], .field-row select, .field-row textarea {
+  width:100%; padding:9px 12px; border:1.5px solid var(--border,#e2e8f0); border-radius:var(--radius,10px);
+  font-size:0.875rem; font-family:inherit; outline:none;
+}
+.field-row input:focus, .field-row select:focus, .field-row textarea:focus { border-color:var(--primary,#0d9488); }
+.toggle-row { display:flex; gap:8px; }
+.toggle-opt { flex:1; text-align:center; padding:9px; border:1.5px solid var(--border,#e2e8f0); border-radius:var(--radius,10px); cursor:pointer; font-size:0.82rem; font-weight:600; }
+.toggle-opt.active { border-color:var(--primary,#0d9488); background:var(--light-teal,#e6f7f5); color:var(--primary,#0d9488); }
+.source-toggle { display:flex; gap:8px; margin-bottom:14px; }
+.editor-toolbar { display:flex; gap:4px; margin-bottom:6px; }
+.editor-toolbar button { width:30px; height:30px; border:1px solid var(--border,#e2e8f0); background:#fff; border-radius:6px; cursor:pointer; font-size:0.82rem; }
+.editor-toolbar button:hover { background:var(--light-teal,#e6f7f5); }
+#post-body-editor {
+  min-height:140px; border:1.5px solid var(--border,#e2e8f0); border-radius:var(--radius,10px);
+  padding:10px 12px; font-size:0.875rem; outline:none;
+}
+#post-body-editor:focus { border-color:var(--primary,#0d9488); }
+.file-drop {
+  border:1.5px dashed var(--border,#e2e8f0); border-radius:var(--radius,10px); padding:18px;
+  text-align:center; font-size:0.82rem; color:var(--text-muted,#64748b); cursor:pointer;
+}
+.file-drop:hover { border-color:var(--secondary,#0891b2); background:var(--light-teal,#e6f7f5); }
+.modal-footer { display:flex; justify-content:flex-end; gap:10px; margin-top:6px; }
+.empty-state { text-align:center; padding:50px 20px; color:var(--text-muted,#64748b); }
+.empty-state .ee-icon { font-size:2.4rem; margin-bottom:10px; }
+.hint { font-size:0.74rem; color:var(--text-muted,#64748b); margin-top:4px; }
+.code-hook {
+  background:#0f2027; color:#9ad8c8; font-family:'SFMono-Regular',Consolas,monospace;
+  font-size:0.7rem; line-height:1.6; padding:14px 16px; border-radius:10px; overflow-x:auto; margin-top:6px; display:none;
+}
+.code-hook.show { display:block; }
+.toast {
+  position:fixed; bottom:24px; right:24px; background:#0f2027; color:#fff; padding:12px 20px;
+  border-radius:var(--radius,10px); font-size:0.85rem; box-shadow:0 8px 24px rgba(0,0,0,0.2);
+  opacity:0; transform:translateY(10px); transition:all 0.25s; pointer-events:none; z-index:200;
+}
+.toast.show { opacity:1; transform:translateY(0); }
+
+@media (max-width:860px) {
+  .admin-sidebar { position:fixed; left:-260px; z-index:50; transition:left 0.2s; }
+  .admin-sidebar.open { left:0; }
+  .admin-content { padding:18px; }
+  .admin-topbar { padding:14px 18px; }
+  .section-toolbar { align-items:flex-start; }
+  .toolbar-filters { width:100%; }
+  .toolbar-filters input, .toolbar-filters select { width:100%; }
+  .video-grid { grid-template-columns:1fr; }
+}
+
+@media (max-width:560px) {
+  .admin-content { padding:14px; }
+  .admin-topbar { flex-direction:column; align-items:flex-start; gap:8px; }
+  .stat-grid { grid-template-columns:1fr 1fr; }
+  .section-toolbar h2 { font-size:1.1rem; }
+  .modal-box { padding:18px; }
+  .modal-footer { flex-direction:column-reverse; }
+  .modal-footer .btn { width:100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="admin-shell">
+
+  <!-- ══════════════ SIDEBAR ══════════════ -->
+  <aside class="admin-sidebar" id="admin-sidebar">
+    <div class="brand">
+      <img src="images/logo.png" alt="HomoDentHealth" style="height:34px;object-fit:contain;" />
+      <div><b>HomoDentHealth</b><span class="tag">Admin Panel</span></div>
+    </div>
+    <div class="role-pill">👤 Content &amp; Support Admin</div>
+
+    <nav class="admin-nav">
+      <a data-section="dashboard" class="active"><span class="nav-icon">📊</span> Dashboard</a>
+      <a data-section="content"><span class="nav-icon">📝</span> Blog &amp; Content</a>
+      <a data-section="videos"><span class="nav-icon">🎬</span> Video Library</a>
+      <a href="livechat-admin.html"><span class="nav-icon">💬</span> Live Chat Center</a>
+
+      <div class="nav-divider">Super Admin Only</div>
+      <a class="locked" onclick="lockedClick(event)"><span class="nav-icon">🦷</span> Patient Records <span class="lock-icon">🔒</span></a>
+      <a class="locked" onclick="lockedClick(event)"><span class="nav-icon">🏥</span> Clinics &amp; Dentists <span class="lock-icon">🔒</span></a>
+      <a class="locked" onclick="lockedClick(event)"><span class="nav-icon">👥</span> User Management <span class="lock-icon">🔒</span></a>
+      <a class="locked" onclick="lockedClick(event)"><span class="nav-icon">⚙️</span> System Settings <span class="lock-icon">🔒</span></a>
+    </nav>
+
+    <div class="sidebar-foot">© 2026 HomoDentHealth<br/>Signed in as Content &amp; Support Admin</div>
+  </aside>
+
+  <!-- ══════════════ MAIN ══════════════ -->
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <div>
+        <h1 id="topbar-title">Dashboard</h1>
+        <p id="topbar-sub">Overview of your content and videos</p>
+      </div>
+      <div class="user-chip">
+        <div class="user-avatar">CS</div>
+      </div>
+    </div>
+
+    <div class="admin-content">
+
+      <!-- ── DASHBOARD ── -->
+      <section class="admin-section active" id="sec-dashboard">
+        <div class="alert alert-info mb-24">
+          <span class="alert-icon">ℹ️</span>
+          <div>As a <strong>Content &amp; Support Admin</strong> you can publish blog content, manage videos, and reply to patient chats. Patient records, clinic/dentist management, and system settings are restricted to Super Admins.</div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-num" id="stat-total-posts">0</div><div class="stat-label">Total Posts</div></div>
+          <div class="stat-card"><div class="stat-num" id="stat-published">0</div><div class="stat-label">Published</div></div>
+          <div class="stat-card"><div class="stat-num" id="stat-drafts">0</div><div class="stat-label">Drafts</div></div>
+          <div class="stat-card"><div class="stat-num" id="stat-videos">0</div><div class="stat-label">Videos</div></div>
+        </div>
+      </section>
+
+      <!-- ── BLOG & CONTENT ── -->
+      <section class="admin-section" id="sec-content">
+        <div class="alert alert-info mb-16">
+          <span class="alert-icon">ℹ️</span>
+          <div>Drafts here are saved to <strong>this browser only</strong> (not the live database) — handy for offline drafting. To publish an article that's visible site-wide, use <a href="admin.html" class="text-primary fw-600">Admin Panel → Manage Articles</a>, which saves directly to the database.</div>
+        </div>
+        <div class="section-toolbar">
+          <h2>Blog &amp; Educational Content</h2>
+          <button class="btn btn-primary" onclick="openPostModal()">+ New Post</button>
+        </div>
+        <div class="toolbar-filters mb-16">
+          <input type="text" id="post-search" placeholder="🔍 Search posts..." oninput="renderPosts()"/>
+          <select id="post-filter-category" onchange="renderPosts()">
+            <option value="">All categories</option>
+            <option>Oral Hygiene</option>
+            <option>Conditions</option>
+            <option>Treatments</option>
+            <option>Prevention</option>
+            <option>Clinic News</option>
+          </select>
+          <select id="post-filter-status" onchange="renderPosts()">
+            <option value="">All statuses</option>
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
+          </select>
+        </div>
+        <table class="admin-table" id="post-table">
+          <thead><tr><th>Post</th><th>Category</th><th>Status</th><th>Updated</th><th></th></tr></thead>
+          <tbody id="post-table-body"></tbody>
+        </table>
+        <div class="empty-state" id="post-empty" style="display:none;">
+          <div class="ee-icon">📝</div>
+          <h3>No posts yet</h3>
+          <p>Click "+ New Post" to publish your first article.</p>
+        </div>
+      </section>
+
+      <!-- ── VIDEO LIBRARY ── -->
+      <section class="admin-section" id="sec-videos">
+        <div class="section-toolbar">
+          <h2>Video Library</h2>
+          <button class="btn btn-primary" onclick="openVideoModal()">+ Add Video</button>
+        </div>
+        <div class="toolbar-filters mb-16">
+          <input type="text" id="video-search" placeholder="🔍 Search videos..." oninput="renderVideos()"/>
+          <select id="video-filter-category" onchange="renderVideos()">
+            <option value="">All categories</option>
+            <option>Oral Hygiene</option>
+            <option>Conditions</option>
+            <option>Treatments</option>
+            <option>Prevention</option>
+            <option>Clinic News</option>
+          </select>
+        </div>
+        <div class="video-grid" id="video-grid"></div>
+        <div class="empty-state" id="video-empty" style="display:none;">
+          <div class="ee-icon">🎬</div>
+          <h3>No videos yet</h3>
+          <p>Paste a YouTube/Vimeo link or upload a file to add your first video.</p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ══════════════ POST MODAL ══════════════ -->
+<div class="modal-overlay" id="post-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('post-modal')">×</button>
+    <h3 id="post-modal-title">New Post</h3>
+    <input type="hidden" id="post-id"/>
+
+    <div class="field-row">
+      <label for="post-title">Title *</label>
+      <input type="text" id="post-title" placeholder="e.g. 5 Signs You Need a Dental Checkup"/>
+    </div>
+    <div class="field-row">
+      <label for="post-category">Category</label>
+      <select id="post-category">
+        <option>Oral Hygiene</option>
+        <option>Conditions</option>
+        <option>Treatments</option>
+        <option>Prevention</option>
+        <option>Clinic News</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <label for="post-excerpt">Short summary</label>
+      <textarea id="post-excerpt" rows="2" placeholder="One or two sentences shown in the blog list"></textarea>
+    </div>
+    <div class="field-row">
+      <label>Cover image</label>
+      <div class="source-toggle">
+        <div class="toggle-opt active" id="post-img-tab-url" onclick="setPostImageTab('url')">🔗 Image URL</div>
+        <div class="toggle-opt" id="post-img-tab-upload" onclick="setPostImageTab('upload')">📁 Upload</div>
+      </div>
+      <input type="url" id="post-image-url" placeholder="https://..."/>
+      <div class="file-drop" id="post-image-drop" style="display:none;" onclick="document.getElementById('post-image-file').click()">
+        📁 Click to choose an image (stored in-browser)
+        <input type="file" id="post-image-file" accept="image/*" style="display:none;" onchange="handlePostImageFile(this)"/>
+      </div>
+      <div class="hint" id="post-image-filename"></div>
+    </div>
+    <div class="field-row">
+      <label>Body</label>
+      <div class="editor-toolbar">
+        <button type="button" onclick="document.execCommand('bold')"><b>B</b></button>
+        <button type="button" onclick="document.execCommand('italic')"><i>I</i></button>
+        <button type="button" onclick="document.execCommand('insertUnorderedList')">• List</button>
+        <button type="button" onclick="document.execCommand('formatBlock', false, 'h3')">H3</button>
+      </div>
+      <div id="post-body-editor" contenteditable="true"></div>
+    </div>
+    <div class="field-row">
+      <label for="post-tags">Tags (comma separated)</label>
+      <input type="text" id="post-tags" placeholder="gingivitis, prevention, kids"/>
+    </div>
+    <div class="field-row">
+      <label>Status</label>
+      <div class="toggle-row">
+        <div class="toggle-opt active" id="post-status-draft" onclick="setPostStatus('draft')">📝 Draft</div>
+        <div class="toggle-opt" id="post-status-published" onclick="setPostStatus('published')">✅ Published</div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('post-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePost()">Save Post</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ VIDEO MODAL ══════════════ -->
+<div class="modal-overlay" id="video-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('video-modal')">×</button>
+    <h3>Add Video</h3>
+    <input type="hidden" id="video-id"/>
+
+    <div class="field-row">
+      <label for="video-title">Title *</label>
+      <input type="text" id="video-title" placeholder="e.g. How to Brush Properly"/>
+    </div>
+    <div class="field-row">
+      <label for="video-category">Category</label>
+      <select id="video-category">
+        <option>Oral Hygiene</option>
+        <option>Conditions</option>
+        <option>Treatments</option>
+        <option>Prevention</option>
+        <option>Clinic News</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <label for="video-desc">Description</label>
+      <textarea id="video-desc" rows="2" placeholder="What is this video about?"></textarea>
+    </div>
+
+    <div class="field-row">
+      <label>Video source</label>
+      <div class="source-toggle">
+        <div class="toggle-opt active" id="video-tab-url" onclick="setVideoSourceTab('url')">🔗 Paste a link</div>
+        <div class="toggle-opt" id="video-tab-upload" onclick="setVideoSourceTab('upload')">📁 Upload a file</div>
+      </div>
+      <div id="video-url-panel">
+        <input type="url" id="video-url" placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."/>
+        <div class="hint">YouTube and Vimeo links are embedded automatically. Direct .mp4 links also work.</div>
+      </div>
+      <div id="video-upload-panel" style="display:none;">
+        <div class="file-drop" onclick="document.getElementById('video-file').click()">
+          📁 Click to choose a video file (stored in your browser)
+          <input type="file" id="video-file" accept="video/*" style="display:none;" onchange="handleVideoFile(this)"/>
+        </div>
+        <div class="hint" id="video-file-info">No file selected. Recommended under 50MB — large files are stored in your browser only, not on a server, until backend upload is wired in.</div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('video-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveVideo()">Save Video</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PREVIEW MODAL ══════════════ -->
+<div class="modal-overlay" id="preview-modal">
+  <div class="modal-box" style="max-width:680px;">
+    <button class="modal-close" onclick="closeModal('preview-modal')">×</button>
+    <h3 id="preview-title"></h3>
+    <div id="preview-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script src="main.js"></script>
+<script>
+requireAuth(['admin', 'content_admin'], 
+);
+/* ════════════════════════════════════════════════════════════════
+   CONTENT & SUPPORT ADMIN — Blog + Video Manager
+
+   NOTE ON THIS PAGE'S BLOG EDITOR: it currently saves drafts to this
+   browser's localStorage only — it is a quick offline-capable editor,
+   not yet wired to the database. For articles that need to be live
+   and visible to other admins/the public, use the main Admin Panel's
+   "Manage Articles" tab (admin.html), which saves directly to the
+   database via /api/admin/blog.
+
+   The Video Library section below IS wired to the real backend
+   (/api/videos) and persists to the database.
+   ════════════════════════════════════════════════════════════════ */
+
+const LS_POSTS = 'dca_blog_posts';
+let postImageTab = 'url';
+let postImageData = null; // base64 string if uploaded
+let videoSourceTab = 'url';
+let videoFileBlob = null; // File object if uploaded
+
+/* ───────────────────────── Navigation ───────────────────────── */
+document.querySelectorAll('.admin-nav a[data-section]').forEach(a => {
+  a.addEventListener('click', () => showSection(a.dataset.section));
+});
+function showSection(name) {
+  document.querySelectorAll('.admin-nav a[data-section]').forEach(a => a.classList.toggle('active', a.dataset.section === name));
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
+  const titles = { dashboard:['Dashboard','Overview of your content and videos'],
+                    content:['Blog & Content','Write and publish patient-facing articles'],
+                    videos:['Video Library','Add and manage educational videos'] };
+  document.getElementById('topbar-title').textContent = titles[name][0];
+  document.getElementById('topbar-sub').textContent = titles[name][1];
+  if (name === 'content') renderPosts();
+  if (name === 'videos') renderVideos();
+  if (name === 'dashboard') renderDashboard();
+  location.hash = name;
+}
+function lockedClick(e) {
+  e.preventDefault();
+  showToast('🔒 This section requires Super Admin access.');
+}
+window.addEventListener('load', () => { if (location.hash) showSection(location.hash.slice(1)); });
+
+/* ───────────────────────── Toast ───────────────────────── */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ───────────────────────── Modal helpers ───────────────────────── */
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+/* ════════════════ BLOG POSTS ════════════════ */
+// Feature 12: Blog posts are loaded from and saved to the real MongoDB backend.
+// localStorage is still used as a fast cache to avoid flicker on re-render.
+let _postsCache = null;
+
+async function loadPostsFromApi() {
+  try {
+    const res = await apiFetch('/api/blog?limit=100');
+    _postsCache = (res.posts || []).map(p => ({
+      id: p._id,
+      _id: p._id,
+      title: p.title,
+      category: p.category,
+      excerpt: p.excerpt,
+      body: p.content,
+      tags: p.tags || [],
+      status: p.status || 'draft',
+      image: p.coverImage || p.image || '',
+      updatedAt: p.updatedAt || p.createdAt
+    }));
+    localStorage.setItem(LS_POSTS, JSON.stringify(_postsCache));
+    return _postsCache;
+  } catch (e) {
+    // Fallback to local cache
+    _postsCache = JSON.parse(localStorage.getItem(LS_POSTS) || '[]');
+    return _postsCache;
+  }
+}
+
+function getPosts() {
+  if (_postsCache !== null) return _postsCache;
+  // Return cached list synchronously while async load is in flight
+  return JSON.parse(localStorage.getItem(LS_POSTS) || '[]');
+}
+function savePostsToStore(posts) {
+  _postsCache = posts;
+  localStorage.setItem(LS_POSTS, JSON.stringify(posts));
+}
+
+function openPostModal(id) {
+  document.getElementById('post-modal-title').textContent = id ? 'Edit Post' : 'New Post';
+  document.getElementById('post-id').value = id || '';
+  postImageData = null;
+  setPostImageTab('url');
+  document.getElementById('post-image-filename').textContent = '';
+
+  if (id) {
+    const post = getPosts().find(p => p.id === id);
+    document.getElementById('post-title').value = post.title;
+    document.getElementById('post-category').value = post.category;
+    document.getElementById('post-excerpt').value = post.excerpt || '';
+    document.getElementById('post-image-url').value = post.image && post.image.startsWith('data:') ? '' : (post.image || '');
+    if (post.image && post.image.startsWith('data:')) { postImageData = post.image; document.getElementById('post-image-filename').textContent = 'Using previously uploaded image'; }
+    document.getElementById('post-body-editor').innerHTML = post.body || '';
+    document.getElementById('post-tags').value = (post.tags || []).join(', ');
+    setPostStatus(post.status);
+  } else {
+    document.getElementById('post-title').value = '';
+    document.getElementById('post-category').value = 'Oral Hygiene';
+    document.getElementById('post-excerpt').value = '';
+    document.getElementById('post-image-url').value = '';
+    document.getElementById('post-body-editor').innerHTML = '';
+    document.getElementById('post-tags').value = '';
+    setPostStatus('draft');
+  }
+  document.getElementById('post-modal').classList.add('open');
+}
+
+function setPostImageTab(tab) {
+  postImageTab = tab;
+  document.getElementById('post-img-tab-url').classList.toggle('active', tab === 'url');
+  document.getElementById('post-img-tab-upload').classList.toggle('active', tab === 'upload');
+  document.getElementById('post-image-url').style.display = tab === 'url' ? '' : 'none';
+  document.getElementById('post-image-drop').style.display = tab === 'upload' ? '' : 'none';
+}
+function handlePostImageFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    postImageData = e.target.result;
+    document.getElementById('post-image-filename').textContent = '✓ ' + file.name + ' ready';
+  };
+  reader.readAsDataURL(file);
+}
+function setPostStatus(status) {
+  document.getElementById('post-status-draft').classList.toggle('active', status === 'draft');
+  document.getElementById('post-status-published').classList.toggle('active', status === 'published');
+  document.getElementById('post-status-draft').dataset.selected = status === 'draft';
+  document.getElementById('post-modal').dataset.status = status;
+}
+
+async function savePost() {
+  const title = document.getElementById('post-title').value.trim();
+  if (!title) { showToast('⚠️ Please enter a title.'); return; }
+
+  const id = document.getElementById('post-id').value || ('post_' + Date.now());
+  const image = postImageTab === 'upload' && postImageData ? postImageData : document.getElementById('post-image-url').value.trim();
+  const post = {
+    id,
+    title,
+    category: document.getElementById('post-category').value,
+    excerpt: document.getElementById('post-excerpt').value.trim(),
+    image,
+    body: document.getElementById('post-body-editor').innerHTML,
+    tags: document.getElementById('post-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+    status: document.getElementById('post-modal').dataset.status || 'draft',
+    updatedAt: new Date().toISOString()
+  };
+
+  // Feature 12: Save to the real backend API
+  const isNew = !document.getElementById('post-id').value || document.getElementById('post-id').value.startsWith('post_');
+  const payload = {
+    title: post.title,
+    category: post.category,
+    excerpt: post.excerpt,
+    content: post.body,
+    coverImage: post.image,
+    tags: post.tags,
+    status: post.status
+  };
+
+  try {
+    let apiRes;
+    if (isNew) {
+      apiRes = await apiFetch('/api/blog', { method: 'POST', body: JSON.stringify(payload) });
+    } else {
+      apiRes = await apiFetch(`/api/blog/${post.id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    }
+    // Refresh from server after save
+    await loadPostsFromApi();
+    closeModal('post-modal');
+    renderPosts();
+    renderDashboard();
+    showToast(post.status === 'published' ? '✅ Post published to blog!' : '📝 Draft saved to database');
+  } catch (e) {
+    // Fallback: save locally and warn
+    let posts = getPosts();
+    const idx = posts.findIndex(p => p.id === id);
+    if (idx > -1) posts[idx] = post; else posts.unshift(post);
+    savePostsToStore(posts);
+    closeModal('post-modal');
+    renderPosts();
+    renderDashboard();
+    showToast('⚠️ Saved locally (backend unavailable). Will sync when reconnected.');
+  }
+}
+
+async function deletePost(id) {
+  if (!confirm('Delete this post? This cannot be undone.')) return;
+  try {
+    await apiFetch(`/api/blog/${id}`, { method: 'DELETE' });
+    await loadPostsFromApi();
+  } catch (e) {
+    // Remove locally on error
+    let posts = getPosts().filter(p => p.id !== id);
+    savePostsToStore(posts);
+  }
+  renderPosts();
+  renderDashboard();
+  showToast('🗑️ Post deleted');
+}
+
+function renderPosts() {
+  const search = (document.getElementById('post-search').value || '').toLowerCase();
+  const catFilter = document.getElementById('post-filter-category').value;
+  const statusFilter = document.getElementById('post-filter-status').value;
+  let posts = getPosts().filter(p =>
+    (!search || p.title.toLowerCase().includes(search)) &&
+    (!catFilter || p.category === catFilter) &&
+    (!statusFilter || p.status === statusFilter)
+  );
+  const tbody = document.getElementById('post-table-body');
+  tbody.innerHTML = '';
+  document.getElementById('post-empty').style.display = posts.length ? 'none' : 'block';
+  document.getElementById('post-table').style.display = posts.length ? '' : 'none';
+
+  posts.forEach(p => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="thumb-cell">
+        ${p.image ? `<img src="${p.image}" alt=""/>` : `<div class="thumb-fallback">📝</div>`}
+        <div><strong>${escapeHtml(p.title)}</strong><div class="hint">${escapeHtml(p.excerpt || '')}</div></div>
+      </div></td>
+      <td>${escapeHtml(p.category)}</td>
+      <td><span class="badge badge-${p.status}">${p.status}</span></td>
+      <td>${new Date(p.updatedAt).toLocaleDateString()}</td>
+      <td><div class="row-actions">
+        <button class="icon-btn" title="Preview" onclick="previewPost('${p.id}')">👁️</button>
+        <button class="icon-btn" title="Edit" onclick="openPostModal('${p.id}')">✏️</button>
+        <button class="icon-btn danger" title="Delete" onclick="deletePost('${p.id}')">🗑️</button>
+      </div></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function previewPost(id) {
+  const p = getPosts().find(x => x.id === id);
+  document.getElementById('preview-title').textContent = p.title;
+  document.getElementById('preview-body').innerHTML =
+    (p.image ? `<img src="${p.image}" style="width:100%;border-radius:10px;margin-bottom:14px;"/>` : '') +
+    `<div class="hint" style="margin-bottom:10px;">${escapeHtml(p.category)} • ${p.status}</div>` + p.body;
+  document.getElementById('preview-modal').classList.add('open');
+}
+
+/* ════════════════ VIDEOS (IndexedDB for blob storage) ════════════════ */
+const DB_NAME = 'HomoDentHealth_ContentDB';
+const STORE_VIDEOS = 'videos';
+let dbPromise = null;
+
+function openDB() {
+  if (dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE_VIDEOS)) {
+        db.createObjectStore(STORE_VIDEOS, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  return dbPromise;
+}
+async function dbGetAllVideos() {
+  // Try backend first (public list), fallback to IndexedDB when offline
+  if (navigator.onLine) {
+    try {
+      const res = await fetch(API_BASE + '/api/videos');
+      if (res.ok) {
+        const json = await res.json();
+        return json.videos || [];
+      }
+    } catch (err) {
+      console.warn('Video API fetch failed, falling back to IndexedDB', err);
+    }
+  }
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_VIDEOS, 'readonly');
+    const req = tx.objectStore(STORE_VIDEOS).getAll();
+    req.onsuccess = () => resolve(req.result.sort((a,b) => b.createdAt - a.createdAt));
+    req.onerror = () => reject(req.error);
+  });
+}
+async function dbPutVideo(record) {
+  // When online, POST to backend API (multipart for uploads). Always store locally in IndexedDB as a fallback.
+  const storeLocally = async (savedRecord) => {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_VIDEOS, 'readwrite');
+      tx.objectStore(STORE_VIDEOS).put(savedRecord);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  };
+
+  if (navigator.onLine) {
+    try {
+      if (record.sourceType === 'upload' && videoFileBlob) {
+        const form = new FormData();
+        form.append('file', videoFileBlob);
+        form.append('title', record.title || 'Untitled');
+        form.append('description', record.description || '');
+        form.append('category', record.category || 'video');
+        const res = await fetch(API_BASE + '/api/videos', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${Store.load('access_token')}` },
+          body: form
+        });
+        if (res.ok) {
+          const json = await res.json();
+          await storeLocally(json.video);
+          return json.video;
+        }
+      } else {
+        const res = await fetch(API_BASE + '/api/videos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${Store.load('access_token')}` },
+          body: JSON.stringify(record)
+        });
+        if (res.ok) {
+          const json = await res.json();
+          await storeLocally(json.video);
+          return json.video;
+        }
+      }
+    } catch (err) {
+      console.warn('Video upload to API failed, will save locally', err);
+    }
+  }
+
+  // Offline or API failed — store locally
+  record.id = record.id || ('local-' + Date.now());
+  record.createdAt = record.createdAt || Date.now();
+  await storeLocally(record);
+  return record;
+}
+async function dbDeleteVideo(id) {
+  // ── BACKEND HOOK: DELETE /api/admin/videos/:id ──
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_VIDEOS, 'readwrite');
+    tx.objectStore(STORE_VIDEOS).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function setVideoSourceTab(tab) {
+  videoSourceTab = tab;
+  document.getElementById('video-tab-url').classList.toggle('active', tab === 'url');
+  document.getElementById('video-tab-upload').classList.toggle('active', tab === 'upload');
+  document.getElementById('video-url-panel').style.display = tab === 'url' ? '' : 'none';
+  document.getElementById('video-upload-panel').style.display = tab === 'upload' ? '' : 'none';
+}
+function handleVideoFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  videoFileBlob = file;
+  const sizeMB = (file.size / (1024*1024)).toFixed(1);
+  document.getElementById('video-file-info').textContent =
+    `✓ ${file.name} (${sizeMB} MB) selected` + (file.size > 50*1024*1024 ? ' — large file, this may slow down the browser. Consider a YouTube/Vimeo link instead.' : '');
+}
+
+function detectEmbed(url) {
+  const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]{11})/);
+  if (yt) return { provider: 'YouTube', embedUrl: `https://www.youtube.com/embed/${yt[1]}`, thumb: `https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg` };
+  const vm = url.match(/vimeo\.com\/(\d+)/);
+  if (vm) return { provider: 'Vimeo', embedUrl: `https://player.vimeo.com/video/${vm[1]}`, thumb: null };
+  if (/\.(mp4|webm|ogg)$/i.test(url)) return { provider: 'Direct link', embedUrl: url, thumb: null };
+  return { provider: 'Link', embedUrl: url, thumb: null };
+}
+
+function openVideoModal() {
+  document.getElementById('video-id').value = '';
+  document.getElementById('video-title').value = '';
+  document.getElementById('video-category').value = 'Oral Hygiene';
+  document.getElementById('video-desc').value = '';
+  document.getElementById('video-url').value = '';
+  document.getElementById('video-file-info').textContent = 'No file selected. Recommended under 50MB.';
+  videoFileBlob = null;
+  setVideoSourceTab('url');
+  document.getElementById('video-modal').classList.add('open');
+}
+
+async function saveVideo() {
+  const title = document.getElementById('video-title').value.trim();
+  if (!title) { showToast('⚠️ Please enter a title.'); return; }
+  if (videoSourceTab === 'url' && !document.getElementById('video-url').value.trim()) { showToast('⚠️ Please paste a video link.'); return; }
+  if (videoSourceTab === 'upload' && !videoFileBlob) { showToast('⚠️ Please choose a file to upload.'); return; }
+
+  const record = {
+    id: 'video_' + Date.now(),
+    title,
+    category: document.getElementById('video-category').value,
+    description: document.getElementById('video-desc').value.trim(),
+    sourceType: videoSourceTab,
+    createdAt: Date.now()
+  };
+
+  if (videoSourceTab === 'url') {
+    const url = document.getElementById('video-url').value.trim();
+    const meta = detectEmbed(url);
+    record.url = url;
+    record.provider = meta.provider;
+    record.embedUrl = meta.embedUrl;
+    record.thumb = meta.thumb;
+  } else {
+    record.provider = 'Uploaded';
+    record.blob = videoFileBlob; // stored directly in IndexedDB
+    record.filename = videoFileBlob.name;
+  }
+
+  await dbPutVideo(record);
+  closeModal('video-modal');
+  renderVideos();
+  renderDashboard();
+  showToast('🎬 Video added');
+}
+
+async function deleteVideoCard(id) {
+  if (!confirm('Delete this video?')) return;
+  await dbDeleteVideo(id);
+  renderVideos();
+  renderDashboard();
+  showToast('🗑️ Video deleted');
+}
+
+async function previewVideo(id) {
+  const videos = await dbGetAllVideos();
+  const v = videos.find(x => x.id === id);
+  document.getElementById('preview-title').textContent = v.title;
+  let body = '';
+  if (v.sourceType === 'url') {
+    if (v.provider === 'Direct link') {
+      body = `<video src="${v.embedUrl}" controls style="width:100%;border-radius:10px;"></video>`;
+    } else {
+      body = `<iframe src="${v.embedUrl}" style="width:100%;aspect-ratio:16/9;border:0;border-radius:10px;" allowfullscreen></iframe>`;
+    }
+  } else if (v.url) {
+    body = `<video src="${v.url}" controls style="width:100%;border-radius:10px;"></video>`;
+  } else {
+    const objUrl = URL.createObjectURL(v.blob);
+    body = `<video src="${objUrl}" controls style="width:100%;border-radius:10px;"></video>`;
+  }
+  document.getElementById('preview-body').innerHTML = body + `<p class="hint" style="margin-top:10px;">${escapeHtml(v.description || '')}</p>`;
+  document.getElementById('preview-modal').classList.add('open');
+}
+
+async function renderVideos() {
+  const search = (document.getElementById('video-search').value || '').toLowerCase();
+  const catFilter = document.getElementById('video-filter-category').value;
+  let videos = await dbGetAllVideos();
+  videos = videos.filter(v => (!search || v.title.toLowerCase().includes(search)) && (!catFilter || v.category === catFilter));
+
+  const grid = document.getElementById('video-grid');
+  grid.innerHTML = '';
+  document.getElementById('video-empty').style.display = videos.length ? 'none' : 'block';
+
+  videos.forEach(v => {
+    const card = document.createElement('div');
+    card.className = 'video-card';
+    const thumbHtml = v.thumb
+      ? `<img src="${v.thumb}" alt=""/>`
+      : `<span>${v.sourceType === 'upload' ? '📁' : '🎬'}</span>`;
+    card.innerHTML = `
+      <div class="video-thumb">
+        ${thumbHtml}
+        <div class="video-play-overlay" onclick="previewVideo('${v.id}')"><span>▶️</span></div>
+      </div>
+      <div class="video-body">
+        <h4>${escapeHtml(v.title)}</h4>
+        <div class="hint">${escapeHtml(v.category)}</div>
+        <div class="video-meta">
+          <span class="src-badge">${v.provider}</span>
+          <div class="row-actions" style="margin-left:auto;">
+            <button class="icon-btn" title="Preview" onclick="previewVideo('${v.id}')">👁️</button>
+            <button class="icon-btn danger" title="Delete" onclick="deleteVideoCard('${v.id}')">🗑️</button>
+          </div>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+/* ════════════════ DASHBOARD ════════════════ */
+async function renderDashboard() {
+  const posts = getPosts();
+  const videos = await dbGetAllVideos();
+  document.getElementById('stat-total-posts').textContent = posts.length;
+  document.getElementById('stat-published').textContent = posts.filter(p => p.status === 'published').length;
+  document.getElementById('stat-drafts').textContent = posts.filter(p => p.status === 'draft').length;
+  document.getElementById('stat-videos').textContent = videos.length;
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+/* ── Init ── */
+renderPosts();
+renderVideos();
+renderDashboard();
+</script>
+</body>
+</html>

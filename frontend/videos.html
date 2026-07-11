@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Video Library — HomoDentHealth</title>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 22px; }
+  .video-card { background: white; border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: box-shadow .2s, transform .15s; }
+  .video-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .video-thumb { position: relative; width: 100%; padding-top: 56.25%; background: #1a1a2e; overflow: hidden; cursor: pointer; }
+  .video-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .85; }
+  .video-thumb-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 2.8rem; }
+  .play-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.3); opacity: 0; transition: opacity .2s; }
+  .video-thumb:hover .play-overlay { opacity: 1; }
+  .play-btn { width: 56px; height: 56px; background: rgba(255,255,255,.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; padding-left: 4px; }
+  .video-body { padding: 16px; }
+  .video-category { display: inline-block; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--primary); background: var(--light-teal); border-radius: 100px; padding: 2px 10px; margin-bottom: 8px; }
+  .video-title { font-size: .95rem; font-weight: 700; line-height: 1.4; margin-bottom: 6px; }
+  .video-desc { font-size: .82rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px; }
+  .video-meta { font-size: .75rem; color: var(--text-muted); display: flex; gap: 12px; }
+  .filter-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+  .pill { padding: 6px 16px; border-radius: 100px; border: 1.5px solid var(--border); font-size: .82rem; font-weight: 600; cursor: pointer; color: var(--text-muted); background: white; transition: all .2s; }
+  .pill:hover { border-color: var(--secondary); color: var(--primary); }
+  .pill.active { background: var(--primary); color: white; border-color: var(--primary); }
+  /* Modal */
+  .video-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+  .video-modal.open { display: flex; }
+  .video-modal-inner { background: #0f0f1a; border-radius: var(--radius-lg); width: 100%; max-width: 840px; overflow: hidden; position: relative; }
+  .video-modal-close { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,.15); border: none; color: white; width: 34px; height: 34px; border-radius: 50%; font-size: 1rem; cursor: pointer; z-index: 10; transition: background .2s; }
+  .video-modal-close:hover { background: rgba(255,255,255,.3); }
+  .video-player-wrap { position: relative; width: 100%; padding-top: 56.25%; background: black; }
+  .video-player-wrap iframe, .video-player-wrap video { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+  .video-modal-info { padding: 18px 22px; color: white; }
+  .video-modal-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; }
+  .video-modal-desc { font-size: .85rem; color: rgba(255,255,255,.65); }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="nav-logo"><img src="images/logo.png" alt="HomoDentHealth" class="nav-logo-img"/></a>
+    <div class="nav-links"><a href="index.html">Home</a><a href="about.html">About</a><a href="services.html">Services</a><a href="clinics.html">Find Clinics</a><a href="blog.html">Health Blog</a><a href="videos.html">Videos</a><a href="contact.html">Contact</a></div>
+    <div class="nav-actions"><a href="auth.html" class="btn btn-secondary btn-sm">Login</a><a href="auth.html" class="btn btn-primary btn-sm">Register</a></div>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html">Home</a><a href="about.html">About</a><a href="services.html">Services</a>
+    <div class="m-actions"><a href="auth.html" class="btn btn-secondary btn-sm">Login</a><a href="auth.html" class="btn btn-primary btn-sm">Register</a></div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div class="breadcrumb"><a href="index.html">Home</a> › Video Library</div>
+  <h1>🎬 Dental Health Video Library</h1>
+  <p>Watch expert-curated videos on oral care, procedures, hygiene tips, and more — all free.</p>
+</div>
+
+<section style="background:var(--bg);">
+  <div class="container-wide">
+
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:20px;">
+      <input type="text" id="video-search" class="form-control" placeholder="Search videos…" style="flex:1;min-width:200px;max-width:360px;"/>
+      <div class="filter-pills" id="cat-pills">
+        <div class="pill active" data-cat="all">All</div>
+        <div class="pill" data-cat="hygiene">Oral Hygiene</div>
+        <div class="pill" data-cat="procedure">Procedures</div>
+        <div class="pill" data-cat="nutrition">Nutrition</div>
+        <div class="pill" data-cat="kids">Kids' Dental</div>
+        <div class="pill" data-cat="emergency">Emergency</div>
+      </div>
+    </div>
+
+    <div class="video-grid" id="video-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-muted);">
+        <div style="font-size:2.2rem;margin-bottom:12px;">⏳</div>
+        <p>Loading videos…</p>
+      </div>
+    </div>
+
+    <div id="no-videos" style="display:none;text-align:center;padding:48px;">
+      <div style="font-size:2.5rem;margin-bottom:12px;">🎬</div>
+      <h4>No videos match your filter</h4>
+      <p>Try selecting a different category or clearing the search.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- Video Player Modal -->
+<div class="video-modal" id="video-modal">
+  <div class="video-modal-inner">
+    <button class="video-modal-close" id="modal-close">✕</button>
+    <div class="video-player-wrap" id="modal-player"></div>
+    <div class="video-modal-info">
+      <div class="video-modal-title" id="modal-title"></div>
+      <div class="video-modal-desc" id="modal-desc"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-disclaimer"><strong>Medical Disclaimer:</strong> Videos are for educational purposes only and are not a substitute for professional dental advice.</div>
+    <div class="footer-grid">
+      <div class="footer-brand"><div class="footer-logo"><img src="images/logo.png" alt="HomoDentHealth" style="height:28px;object-fit:contain;"/></div><p>Nigeria's AI-assisted dental screening and referral platform.</p></div>
+      <div class="footer-col"><h4>Platform</h4><ul><li><a href="assessment.html">Symptom Checker</a></li><li><a href="clinics.html">Find Clinics</a></li><li><a href="appointment.html">Book Appointment</a></li></ul></div>
+      <div class="footer-col"><h4>Learn</h4><ul><li><a href="blog.html">Health Blog</a></li><li><a href="videos.html">Video Library</a></li><li><a href="videos.html">Video Library</a></li></ul></div>
+      <div class="footer-col"><h4>Company</h4><ul><li><a href="about.html">About Us</a></li><li><a href="contact.html">Contact</a></li><li><a href="privacy.html">Privacy Policy</a></li></ul></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 HomoDentHealth.</span></div>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="main.js"></script>
+<script>
+/* ============================================================
+   Feature 17 — Public Video Library
+   Loads videos from /api/videos (admin-uploaded). Falls back
+   to a curated static list if the backend is unreachable.
+   ============================================================ */
+
+const FALLBACK_VIDEOS = [
+  { _id:'v1', title:'How to Brush Your Teeth Correctly', description:'A step-by-step guide to the dentist-recommended brushing technique for adults and children.', category:'hygiene', sourceType:'url', provider:'youtube', embedUrl:'https://www.youtube.com/embed/5mEj-aCJRfo', thumb:'', duration:'3:42' },
+  { _id:'v2', title:'Flossing: Why It Matters and How to Do It Right', description:'Most people skip flossing. Here\'s why it\'s crucial and the easiest technique to build the habit.', category:'hygiene', sourceType:'url', provider:'youtube', embedUrl:'https://www.youtube.com/embed/DnRVSCbbFLs', thumb:'', duration:'4:15' },
+  { _id:'v3', title:'What Happens During a Dental Cleaning?', description:'A clear walkthrough of what to expect at a professional dental cleaning appointment.', category:'procedure', sourceType:'url', provider:'youtube', embedUrl:'https://www.youtube.com/embed/KeCtOiAT4_k', thumb:'', duration:'6:08' },
+  { _id:'v4', title:'Foods That Damage Your Teeth — And Healthy Swaps', description:'Surprising foods that erode enamel, and easy substitutes for a healthier smile.', category:'nutrition', sourceType:'url', provider:'youtube', embedUrl:'https://www.youtube.com/embed/6m4qJXdJlRY', thumb:'', duration:'5:30' },
+  { _id:'v5', title:'Teaching Kids to Brush Their Teeth', description:'Fun, age-appropriate techniques to help children build good oral hygiene habits from an early age.', category:'kids', sourceType:'url', provider:'youtube', embedUrl:'https://www.youtube.com/embed/hj-z7L0eVBk', thumb:'', duration:'4:50' },
+  { _id:'v6', title:'What to Do in a Dental Emergency', description:'Knocked-out tooth, severe toothache, cracked tooth — what to do in the first 30 minutes.', category:'emergency', sourceType:'url', provider:'youtube', embedUrl:'https://www.youtube.com/embed/Jmg0aFkCL_I', thumb:'', duration:'7:12' },
+];
+
+const CAT_LABELS = { all:'All', hygiene:'Oral Hygiene', procedure:'Procedures', nutrition:'Nutrition', kids:"Kids' Dental", emergency:'Emergency' };
+
+let allVideos = [];
+let activeCat = 'all';
+
+function getEmbedUrl(v) {
+  if (v.embedUrl) return v.embedUrl;
+  if (v.sourceType === 'url' && v.url) {
+    // Convert YouTube watch URL to embed
+    const yt = v.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+    const vim = v.url.match(/vimeo\.com\/(\d+)/);
+    if (vim) return `https://player.vimeo.com/video/${vim[1]}`;
+    return v.url;
+  }
+  return null;
+}
+
+function getThumbUrl(v) {
+  if (v.thumb) return v.thumb;
+  if (v.embedUrl?.includes('youtube') || v.url?.includes('youtube') || v.url?.includes('youtu.be')) {
+    const m = (v.embedUrl || v.url || '').match(/embed\/([A-Za-z0-9_-]{11})|v=([A-Za-z0-9_-]{11})|youtu\.be\/([A-Za-z0-9_-]{11})/);
+    const id = m && (m[1] || m[2] || m[3]);
+    if (id) return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+  }
+  return null;
+}
+
+function renderVideos() {
+  const search = document.getElementById('video-search').value.toLowerCase();
+  let vids = allVideos.filter(v => {
+    const matchCat = activeCat === 'all' || v.category === activeCat;
+    const matchSearch = !search || v.title.toLowerCase().includes(search) || (v.description || '').toLowerCase().includes(search);
+    return matchCat && matchSearch;
+  });
+
+  const grid = document.getElementById('video-grid');
+  const noVids = document.getElementById('no-videos');
+
+  if (!vids.length) {
+    grid.innerHTML = '';
+    noVids.style.display = 'block';
+    return;
+  }
+  noVids.style.display = 'none';
+
+  grid.innerHTML = vids.map((v, i) => {
+    const thumb = getThumbUrl(v);
+    const cat = CAT_LABELS[v.category] || v.category || 'Video';
+    return `<div class="video-card">
+      <div class="video-thumb" onclick="openVideo(${i})">
+        ${thumb ? `<img src="${thumb}" alt="${v.title}" onerror="this.style.display='none'"/>` : ''}
+        <div class="video-thumb-icon" ${thumb ? 'style="display:none"' : ''}>🎬</div>
+        <div class="play-overlay"><div class="play-btn">▶</div></div>
+      </div>
+      <div class="video-body">
+        <div class="video-category">${cat}</div>
+        <div class="video-title">${v.title}</div>
+        <div class="video-desc">${v.description || ''}</div>
+        <div class="video-meta">
+          ${v.duration ? `<span>⏱ ${v.duration}</span>` : ''}
+          ${v.provider ? `<span>📺 ${v.provider.charAt(0).toUpperCase() + v.provider.slice(1)}</span>` : ''}
+        </div>
+        <button class="btn btn-primary btn-sm mt-12" onclick="openVideo(${i})">▶ Watch Video</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Store filtered list for modal navigation
+  window._filteredVideos = vids;
+}
+
+function openVideo(idx) {
+  const vids = window._filteredVideos || allVideos;
+  const v = vids[idx];
+  if (!v) return;
+
+  const modal = document.getElementById('video-modal');
+  const player = document.getElementById('modal-player');
+  const embed = getEmbedUrl(v);
+
+  if (embed) {
+    const isUpload = v.sourceType === 'upload';
+    const apiBase = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || '';
+    player.innerHTML = isUpload
+      ? `<video controls autoplay src="${apiBase}${v.url}"></video>`
+      : `<iframe src="${embed}?autoplay=1&rel=0" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
+  } else if (v.url) {
+    // Direct link fallback
+    player.innerHTML = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#111;color:white;flex-direction:column;gap:12px;">
+      <div style="font-size:2rem;">🎬</div>
+      <a href="${v.url}" target="_blank" class="btn btn-primary">Open Video ↗</a>
+    </div>`;
+  } else {
+    player.innerHTML = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#111;color:#aaa;">Video unavailable</div>`;
+  }
+
+  document.getElementById('modal-title').textContent = v.title;
+  document.getElementById('modal-desc').textContent = v.description || '';
+  modal.classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('video-modal').classList.remove('open');
+  document.getElementById('modal-player').innerHTML = ''; // Stop video on close
+}
+
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('video-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('video-modal')) closeModal();
+});
+
+// Category pills
+document.querySelectorAll('.pill[data-cat]').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    activeCat = pill.dataset.cat;
+    renderVideos();
+  });
+});
+
+document.getElementById('video-search').addEventListener('input', renderVideos);
+
+// Load from backend
+async function loadVideos() {
+  try {
+    const res = await apiFetch('/api/videos');
+    const apiVids = res.videos || [];
+    allVideos = apiVids.length ? apiVids : FALLBACK_VIDEOS;
+  } catch (e) {
+    allVideos = FALLBACK_VIDEOS;
+  }
+  renderVideos();
+}
+
+loadVideos();
+</script>
+</body>
+</html>

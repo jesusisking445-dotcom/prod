@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HomoDentHealth — Dental Screening & Referral Platform</title>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav class="navbar">
+  <a href="index.html" class="nav-logo"><img src="images/logo.png" alt="HomoDentHealth" class="nav-logo-img" /></a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="clinics.html">Find Clinics</a>
+      <a href="blog.html">Health Blog</a><a href="videos.html">Videos</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="nav-actions">
+      <a href="auth.html" class="btn btn-secondary btn-sm">Login</a>
+      <a href="auth.html" class="btn btn-primary btn-sm">Register Free</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="services.html">Services</a>
+    <a href="clinics.html">Find Clinics</a>
+    <a href="blog.html">Health Blog</a><a href="videos.html">Videos</a>
+    <a href="contact.html">Contact</a>
+    <div class="m-actions">
+      <a href="auth.html" class="btn btn-secondary btn-sm">Login</a>
+      <a href="auth.html" class="btn btn-primary btn-sm">Register</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="section-label" style="background:rgba(255,255,255,0.18);color:white;">🇳🇬 Made for Nigeria</div>
+    <h1>Smart Dental Screening & Referral — Available 24/7</h1>
+    <p>Answer a few questions about your dental symptoms. Our triage system assesses urgency, provides guidance, and connects you to the nearest dental clinic.</p>
+    <div class="hero-actions">
+      <a href="assessment.html" class="btn-hero-primary pulse">🦷 Check My Symptoms</a>
+      <a href="about.html" class="btn-hero-secondary">How It Works →</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="hero-stat-num">3,400+</div>
+        <div class="hero-stat-label">Patients Screened</div>
+      </div>
+      <div style="width:1px;background:rgba(255,255,255,0.2);height:48px;"></div>
+      <div>
+        <div class="hero-stat-num">120+</div>
+        <div class="hero-stat-label">Partner Clinics</div>
+      </div>
+      <div style="width:1px;background:rgba(255,255,255,0.2);height:48px;"></div>
+      <div>
+        <div class="hero-stat-num">95%</div>
+        <div class="hero-stat-label">Triage Accuracy</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── EMERGENCY BANNER ── -->
+<section class="tight" style="background:white;border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div class="emergency-banner">
+      <div class="icon">🚨</div>
+      <div>
+        <h3>Dental Emergency? Act Now.</h3>
+        <p>If you have facial swelling, difficulty breathing, severe uncontrolled bleeding, or trauma — go to the nearest hospital emergency room immediately or call <strong>112</strong>.</p>
+      </div>
+      <a href="assessment.html" class="btn" style="background:white;color:#A51C30;border-color:white;font-weight:700;flex-shrink:0;">Emergency Check</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ── -->
+<section style="background:var(--bg);">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">How It Works</div>
+      <h2>From symptoms to care in minutes</h2>
+      <p>Our guided assessment takes less than 5 minutes and connects you to the right level of dental care.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h4>Describe Your Symptoms</h4>
+        <p>Answer simple questions about your dental pain, sensitivity, swelling, or other concerns.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h4> Triage Analysis</h4>
+        <p>Our rule-based engine analyses your symptoms and categorises urgency — emergency, urgent, moderate, or mild.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h4>Get Personalised Advice</h4>
+        <p>Receive tailored home care guidance, a possible condition suggestion, and recommended next steps.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h4>Connect to a Clinic</h4>
+        <p>Find the nearest dental clinic or book an appointment directly through the platform.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SERVICES ── -->
+<section style="background:white;">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Our Services</div>
+      <h2>Comprehensive dental triage support</h2>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-icon">🦷</div>
+        <h4>Tooth Pain Assessment</h4>
+        <p>Evaluate the nature, location, and severity of tooth pain to suggest possible causes and urgency level.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🩸</div>
+        <h4>Gum Disease Screening</h4>
+        <p>Detect early signs of gingivitis or periodontal disease based on bleeding, swelling, and other indicators.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🚨</div>
+        <h4>Dental Emergency Detection</h4>
+        <p>Instantly identify life-threatening dental emergencies and direct you to immediate care pathways.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📍</div>
+        <h4>Clinic Referral</h4>
+        <p>Locate the nearest dental clinic based on your location, with filters for emergency availability and specialty.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📅</div>
+        <h4>Appointment Booking</h4>
+        <p>Book dental appointments directly with partner clinics, with email and SMS reminders.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📚</div>
+        <h4>Oral Health Education</h4>
+        <p>Access articles, guides, and tips on brushing, diet, gum care, and preventing dental disease.</p>
+      </div>
+    </div>
+    <div class="text-center mt-32">
+      <a href="services.html" class="btn btn-secondary btn-lg">View All Services →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── CONDITION TABLE ── -->
+<section style="background:var(--bg);">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Symptom Guide</div>
+      <h2>Common conditions we can help identify</h2>
+      <p>Our triage engine maps your symptoms to possible dental conditions — always with a professional referral recommendation.</p>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Symptom Pattern</th>
+              <th>Possible Condition</th>
+              <th>Urgency Level</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Cold sensitivity, pain on biting</td>
+              <td>Dental Caries (Cavity)</td>
+              <td><span class="badge badge-moderate">Moderate</span></td>
+              <td>Schedule clinic visit</td>
+            </tr>
+            <tr>
+              <td>Swollen, bleeding gums</td>
+              <td>Gingivitis / Periodontal Disease</td>
+              <td><span class="badge badge-moderate">Moderate</span></td>
+              <td>Professional cleaning</td>
+            </tr>
+            <tr>
+              <td>Severe throbbing pain, fever, swelling</td>
+              <td>Dental Abscess</td>
+              <td><span class="badge badge-severe">Urgent</span></td>
+              <td>See dentist today</td>
+            </tr>
+            <tr>
+              <td>Facial swelling, difficulty breathing</td>
+              <td>Spreading Oral Infection</td>
+              <td><span class="badge badge-emergency">Emergency</span></td>
+              <td>Immediate ER care</td>
+            </tr>
+            <tr>
+              <td>Jaw pain, clicking</td>
+              <td>TMJ Disorder</td>
+              <td><span class="badge badge-moderate">Moderate</span></td>
+              <td>Dental evaluation</td>
+            </tr>
+            <tr>
+              <td>Bad breath, gum swelling</td>
+              <td>Periodontal Infection</td>
+              <td><span class="badge badge-mild">Mild</span></td>
+              <td>Oral hygiene + check-up</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="alert alert-info mt-24">
+      <span class="alert-icon">ℹ️</span>
+      <div>This table is for educational purposes only. This platform <strong>does not provide a final diagnosis.</strong> All suggestions must be confirmed by a licensed dental professional.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── TESTIMONIALS ── -->
+<section style="background:white;">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-label">Patient Stories</div>
+      <h2>Helping Nigerians access dental care</h2>
+    </div>
+    <div class="grid-3">
+      <div class="testimonial">
+        <div class="stars">★★★★★</div>
+        <p class="testimonial-text">"I had severe tooth pain at 11pm. The system immediately flagged it as possibly an abscess and told me to go to the emergency clinic the next morning. The dentist confirmed it — it could have become serious."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">AO</div>
+          <div>
+            <div class="author-name">Adaeze Okonkwo</div>
+            <div class="author-role">Patient — Lagos</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial">
+        <div class="stars">★★★★★</div>
+        <p class="testimonial-text">"Living in Ibadan, finding a good dentist was hard. HomoDentHealth pointed me to three clinics within 5km and helped me book an appointment the same day. Excellent platform."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">EB</div>
+          <div>
+            <div class="author-name">Emmanuel Balogun</div>
+            <div class="author-role">Patient — Ibadan</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial">
+        <div class="stars">★★★★☆</div>
+        <p class="testimonial-text">"I use it to pre-screen patients before they arrive. It saves consultation time and gives me useful background on each patient's chief complaint and urgency level."</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">DT</div>
+          <div>
+            <div class="author-name">Dr. Taiwo Adeleke</div>
+            <div class="author-role">Dentist — Abuja</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── NEARBY CLINICS PREVIEW ── -->
+<section style="background:var(--bg);">
+  <div class="container">
+    <div class="flex-between mb-32" style="flex-wrap:wrap;gap:16px;">
+      <div>
+        <div class="section-label">Clinic Directory</div>
+        <h2 style="margin-top:8px;">Partner clinics near you</h2>
+        <p style="margin-top:8px;">We work with over 120 verified dental clinics across Nigeria.</p>
+      </div>
+      <a href="clinics.html" class="btn btn-primary">Browse All Clinics →</a>
+    </div>
+    <div class="grid-3">
+      <div class="clinic-card">
+        <div class="clinic-avatar">🏥</div>
+        <div class="clinic-info">
+          <div class="clinic-name">Poly Dental Clinic</div>
+          <div class="clinic-meta">📍 Ijebu-Ode, Ogun State</div>
+          <div class="clinic-meta">⭐ 4.8 · Open until 8pm</div>
+          <div class="mt-12" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span class="badge badge-teal">Emergency</span>
+            <span class="badge badge-mild">Orthodontics</span>
+          </div>
+        </div>
+      </div>
+      <div class="clinic-card">
+        <div class="clinic-avatar">🦷</div>
+        <div class="clinic-info">
+          <div class="clinic-name">Smile Health Clinic</div>
+          <div class="clinic-meta">📍 Ikeja, Lagos</div>
+          <div class="clinic-meta">⭐ 4.6 · Open until 6pm</div>
+          <div class="mt-12" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span class="badge badge-teal">General Dentistry</span>
+          </div>
+        </div>
+      </div>
+      <div class="clinic-card">
+        <div class="clinic-avatar">⚕️</div>
+        <div class="clinic-info">
+          <div class="clinic-name">Abuja Oral Health Centre</div>
+          <div class="clinic-meta">📍 Wuse 2, Abuja</div>
+          <div class="clinic-meta">⭐ 4.9 · 24hr Emergency</div>
+          <div class="mt-12" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span class="badge badge-severe">24/7 Emergency</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section style="background:linear-gradient(135deg,var(--primary),var(--primary-light));">
+  <div class="container text-center">
+    <div style="font-size:3rem;margin-bottom:16px;">🦷</div>
+    <h2 style="color:white;margin-bottom:14px;">Ready to assess your dental health?</h2>
+    <p style="color:rgba(255,255,255,0.8);max-width:520px;margin:0 auto 32px;">Takes less than 5 minutes. No registration required for basic screening. Get personalised dental guidance today.</p>
+    <a href="assessment.html" class="btn-hero-primary">Start Free Symptom Check</a>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-disclaimer">
+      <strong>Medical Disclaimer:</strong> HomoDentHealth is a dental screening and referral tool for educational and triage purposes only. It is not a substitute for professional dental or medical advice, diagnosis, or treatment. Always seek the advice of a qualified dental professional with any questions you may have regarding a dental condition.
+    </div>
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="footer-logo"><div class="tooth-icon">🦷</div> <span style="color:var(--secondary);">HomoDentHealth</span></div>
+        <p>Nigeria's  dental screening and referral platform. Connecting patients to quality dental care since 2026.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="assessment.html">Symptom Checker</a></li>
+          <li><a href="clinics.html">Find Clinics</a></li>
+          <li><a href="appointment.html">Book Appointment</a></li>
+          <li><a href="dashboard.html">Patient Dashboard</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="services.html">Services</a></li>
+          <li><a href="blog.html">Health Blog</a><a href="videos.html">Videos</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Support</h4>
+        <ul>
+          <li><a href="contact.html">Help Centre</a></li>
+          <li><a href="privacy.html">Privacy Policy</a></li>
+          <li><a href="terms.html">Terms of Service</a></li>
+          <li><a href="admin.html">Admin Panel</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 HomoDentHealth. All rights reserved.</span>
+      
+    </div>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

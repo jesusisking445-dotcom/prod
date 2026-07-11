@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Login / Register — HomoDentHealth</title>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+/* ── Page layout ─────────────────────────────────────── */
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* ── Left brand panel ────────────────────────────────── */
+.auth-brand {
+  background: linear-gradient(155deg, var(--primary-dark) 0%, var(--primary) 55%, var(--primary-light) 100%);
+  padding: 52px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+.auth-brand::before {
+  content: '';
+  position: absolute;
+  top: -80px; right: -80px;
+  width: 360px; height: 360px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+}
+.auth-brand::after {
+  content: '';
+  position: absolute;
+  bottom: -60px; left: -40px;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+}
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: white;
+  position: relative;
+  z-index: 1;
+}
+.brand-logo .tooth {
+  width: 40px; height: 40px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+.brand-hero { position: relative; z-index: 1; }
+.brand-hero h1 {
+  color: white;
+  font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+  line-height: 1.25;
+  margin-bottom: 16px;
+}
+.brand-hero p {
+  color: rgba(255,255,255,0.78);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  max-width: 360px;
+}
+.brand-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 36px;
+  position: relative;
+  z-index: 1;
+}
+.brand-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: rgba(255,255,255,0.88);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.brand-features .feat-icon {
+  width: 30px; height: 30px;
+  background: rgba(255,255,255,0.14);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+  border: 1px solid rgba(255,255,255,0.18);
+}
+.brand-testimonial {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  position: relative;
+  z-index: 1;
+}
+.brand-testimonial p {
+  color: rgba(255,255,255,0.9);
+  font-size: 0.85rem;
+  font-style: italic;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+.brand-testimonial .author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-testimonial .av {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: white;
+  flex-shrink: 0;
+}
+.brand-testimonial .name { font-weight: 600; font-size: 0.8rem; color: white; }
+.brand-testimonial .role { font-size: 0.75rem; color: rgba(255,255,255,0.6); }
+
+/* ── Right form panel ────────────────────────────────── */
+.auth-form-panel {
+  background: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 52px 56px;
+  overflow-y: auto;
+  min-height: 100vh;
+}
+.auth-form-inner { width: 100%; max-width: 420px; }
+
+/* ── Tab switcher ────────────────────────────────────── */
+.auth-tabs {
+  display: flex;
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 32px;
+  border: 1px solid var(--border);
+}
+.auth-tab {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.22s;
+}
+.auth-tab.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Password field ──────────────────────────────────── */
+.password-wrap { position: relative; }
+.password-wrap .form-control { padding-right: 46px; }
+.pw-toggle {
+  position: absolute;
+  right: 14px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none;
+  font-size: 1rem; color: var(--text-muted);
+  cursor: pointer; line-height: 1;
+  padding: 4px;
+  transition: color 0.2s;
+}
+.pw-toggle:hover { color: var(--primary); }
+
+/* ── Strength meter ──────────────────────────────────── */
+.strength-bar {
+  display: flex; gap: 4px; margin-top: 8px;
+}
+.strength-seg {
+  flex: 1; height: 4px; border-radius: 2px;
+  background: var(--border);
+  transition: background 0.3s;
+}
+.strength-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  min-height: 16px;
+}
+
+/* ── Divider ─────────────────────────────────────────── */
+.or-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 20px 0;
+  font-size: 0.8rem; color: var(--text-muted);
+}
+.or-divider::before,
+.or-divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: var(--border);
+}
+
+/* ── Social buttons ──────────────────────────────────── */
+.social-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 11px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: white;
+  font-family: var(--font-body);
+  font-size: 0.875rem; font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 10px;
+}
+.social-btn:hover { border-color: var(--secondary); background: var(--light-teal); }
+.social-icon { width: 20px; height: 20px; flex-shrink: 0; }
+
+/* ── Gender chips ────────────────────────────────────── */
+.gender-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.gender-chip {
+  flex: 1; min-width: 90px;
+  padding: 9px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  text-align: center;
+  font-size: 0.82rem; font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer; transition: all 0.2s;
+}
+.gender-chip:hover { border-color: var(--secondary); color: var(--primary); background: var(--light-teal); }
+.gender-chip.selected { border-color: var(--primary); color: var(--primary); background: var(--light-teal); }
+
+/* ── OTP screen ──────────────────────────────────────── */
+.otp-inputs {
+  display: flex; gap: 10px; justify-content: center;
+  margin: 24px 0 8px;
+}
+.otp-digit {
+  width: 52px; height: 58px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.5rem; font-weight: 700;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  outline: none;
+  color: var(--primary);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.otp-digit:focus {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 3px rgba(76,171,160,0.15);
+}
+
+/* ── Loading spinner ──────────────────────────────────── */
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: none;
+}
+.btn.loading .spinner { display: inline-block; }
+.btn.loading .btn-text { display: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Inline alert ────────────────────────────────────── */
+.auth-alert {
+  display: none;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  margin-bottom: 18px;
+  flex-direction: column;
+  gap: 2px;
+}
+.auth-alert.show { display: flex; }
+.auth-alert.error   { background: #FEE2E2; border: 1px solid #FECACA; color: #7F1D1D; }
+.auth-alert.success { background: #D1FAE5; border: 1px solid #A7F3D0; color: #064E3B; }
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 860px) {
+  .auth-page { grid-template-columns: 1fr; }
+  .auth-brand { display: none; }
+  .auth-form-panel { padding: 40px 24px; }
+}
+@media (max-width: 420px) {
+  .auth-form-panel { padding: 24px 16px; }
+  .auth-form-inner { max-width: 100%; }
+  .auth-tabs { margin-bottom: 20px; }
+  .btn { width: 100%; justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="auth-page">
+
+  <!-- ═══════════════════ LEFT BRAND PANEL ═══════════════════ -->
+  <div class="auth-brand">
+    <a href="index.html" class="nav-logo"><img src="images/logo.png" alt="HomoDentHealth" class="nav-logo-img" /></a>
+
+    <div class="brand-hero">
+      <h1>Your dental health, guided by intelligent triage</h1>
+      <p>Create a free account to save your assessments, track your dental history, and book appointments with verified clinics across Nigeria.</p>
+
+      <ul class="brand-features">
+        <li>
+          <div class="feat-icon">🔍</div>
+          <div><strong style="color:white;font-size:0.875rem;">AI Symptom Assessment</strong><br>Get an instant triage result and home-care advice.</div>
+        </li>
+        <li>
+          <div class="feat-icon">📋</div>
+          <div><strong style="color:white;font-size:0.875rem;">Your Assessment History</strong><br>All your past screenings in one secure place.</div>
+        </li>
+        <li>
+          <div class="feat-icon">📅</div>
+          <div><strong style="color:white;font-size:0.875rem;">Appointment Booking</strong><br>Book directly with 120+ verified clinics.</div>
+        </li>
+        <li>
+          <div class="feat-icon">🔔</div>
+          <div><strong style="color:white;font-size:0.875rem;">Reminders &amp; Referrals</strong><br>SMS and email alerts before every visit.</div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="brand-testimonial">
+      <p>"HomoDentHealth flagged my abscess at 11 PM when no clinic was open. I went straight to the emergency room and the doctor said it saved me from a serious infection."</p>
+      <div class="author">
+        <div class="av">CO</div>
+        <div>
+          <div class="name">Chioma Obi</div>
+          <div class="role">Patient — Lagos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ RIGHT FORM PANEL ═══════════════════ -->
+  <div class="auth-form-panel">
+    <div class="auth-form-inner">
+
+      <!-- Back to home link -->
+      <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--text-muted);margin-bottom:28px;transition:color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">
+        ← Back to HomoDentHealth
+      </a>
+
+      <!-- ───── SCREEN 1: LOGIN / REGISTER TABS ───── -->
+      <div id="screen-auth">
+        <!-- Tabs -->
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tab-login">Login</button>
+          <button class="auth-tab" id="tab-register">Create Account</button>
+        </div>
+
+        <!-- Alert box (shared) -->
+        <div class="auth-alert" id="auth-alert" role="alert"></div>
+
+        <!-- ─── LOGIN FORM ─── -->
+        <div id="form-login">
+          <div style="margin-bottom:28px;">
+            <h2 style="font-size:1.6rem;margin-bottom:6px;">Welcome back</h2>
+            <p style="font-size:0.875rem;">Login to your HomoDentHealth account.</p>
+          </div>
+
+          <!-- Social logins (cosmetic — wire to OAuth in production) -->
+          <button class="social-btn" type="button" onclick="showInfo('Google OAuth would be configured here in production.')">
+            <svg class="social-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            Continue with Google
+          </button>
+
+          <div class="or-divider">or login with email</div>
+
+          <form id="login-form" novalidate>
+            <div class="form-group">
+              <label for="login-email">Email Address</label>
+              <input type="email" id="login-email" class="form-control" placeholder="yourname@example.com" autocomplete="email"/>
+              <div class="form-error" id="err-login-email"></div>
+            </div>
+            <div class="form-group">
+              <label for="login-password" style="display:flex;justify-content:space-between;align-items:center;">
+                <span>Password</span>
+                <a href="#" id="forgot-link" onclick="showForgot(); return false;" style="font-size:0.8rem;color:var(--secondary);font-weight:600;">Forgot password?</a>
+              </label>
+              <div class="password-wrap">
+                <input type="password" id="login-password" class="form-control" placeholder="••••••••" autocomplete="current-password"/>
+                <button type="button" class="pw-toggle" onclick="togglePw('login-password', this)" aria-label="Show password">👁️</button>
+              </div>
+              <div class="form-error" id="err-login-password"></div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+              <input type="checkbox" id="remember-me" style="width:16px;height:16px;accent-color:var(--primary);"/>
+              <label for="remember-me" style="font-size:0.85rem;color:var(--text-muted);cursor:pointer;font-weight:400;">Remember me on this device</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;" id="btn-login">
+              <div class="spinner"></div>
+              <span class="btn-text">Login to my account</span>
+            </button>
+          </form>
+
+          <p style="text-align:center;font-size:0.85rem;margin-top:20px;color:var(--text-muted);">
+            Don't have an account?
+            <a href="#" onclick="switchTab('register'); return false;" style="color:var(--primary);font-weight:700;">Create one free →</a>
+          </p>
+        </div><!-- /form-login -->
+
+        <!-- ─── REGISTER FORM ─── -->
+        <div id="form-register" style="display:none;">
+          <div style="margin-bottom:24px;">
+            <h2 style="font-size:1.6rem;margin-bottom:6px;">Create your account</h2>
+            <p style="font-size:0.875rem;">Free for all patients. Takes under 60 seconds.</p>
+          </div>
+
+          <form id="register-form" novalidate>
+            <div class="grid-2" style="gap:14px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="reg-fullname">Full Name *</label>
+                <input type="text" id="reg-fullname" class="form-control" placeholder="Amaka Obi" autocomplete="name"/>
+                <div class="form-error" id="err-reg-name"></div>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="reg-phone">Phone Number</label>
+                <input type="tel" id="reg-phone" class="form-control" placeholder="+234 800 000 0000" autocomplete="tel"/>
+              </div>
+            </div>
+
+            <div class="form-group mt-16">
+              <label for="reg-email">Email Address *</label>
+              <input type="email" id="reg-email" class="form-control" placeholder="yourname@example.com" autocomplete="email"/>
+              <div class="form-error" id="err-reg-email"></div>
+            </div>
+
+            <div class="grid-2" style="gap:14px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="reg-dob">Date of Birth</label>
+                <input type="date" id="reg-dob" class="form-control"/>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label>Gender</label>
+                <div class="gender-chips" id="gender-chips">
+                  <div class="gender-chip" data-val="male">Male</div>
+                  <div class="gender-chip" data-val="female">Female</div>
+                  <div class="gender-chip" data-val="prefer_not">Other</div>
+                </div>
+                <input type="hidden" id="reg-gender" value=""/>
+              </div>
+            </div>
+
+            <div class="form-group mt-16">
+              <label for="reg-password">Password *</label>
+              <div class="password-wrap">
+                <input type="password" id="reg-password" class="form-control" placeholder="At least 8 characters" autocomplete="new-password" oninput="checkStrength(this.value)"/>
+                <button type="button" class="pw-toggle" onclick="togglePw('reg-password', this)" aria-label="Show password">👁️</button>
+              </div>
+              <div class="strength-bar" id="strength-bar">
+                <div class="strength-seg" id="seg1"></div>
+                <div class="strength-seg" id="seg2"></div>
+                <div class="strength-seg" id="seg3"></div>
+                <div class="strength-seg" id="seg4"></div>
+              </div>
+              <div class="strength-label" id="strength-label"></div>
+              <div class="form-error" id="err-reg-password"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="reg-confirm">Confirm Password *</label>
+              <div class="password-wrap">
+                <input type="password" id="reg-confirm" class="form-control" placeholder="Repeat your password" autocomplete="new-password"/>
+                <button type="button" class="pw-toggle" onclick="togglePw('reg-confirm', this)" aria-label="Show password">👁️</button>
+              </div>
+              <div class="form-error" id="err-reg-confirm"></div>
+            </div>
+
+            <div style="background:var(--light-teal);border-radius:var(--radius);padding:14px 16px;margin-bottom:18px;font-size:0.82rem;color:var(--primary);line-height:1.6;">
+              By creating an account you agree to our <a href="#" style="font-weight:700;color:var(--primary);">Terms of Service</a> and consent to HomoDentHealth processing your health data as described in our <a href="#" style="font-weight:700;color:var(--primary);">Privacy Policy</a>.
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;" id="btn-register">
+              <div class="spinner"></div>
+              <span class="btn-text">Create free account</span>
+            </button>
+          </form>
+
+          <p style="text-align:center;font-size:0.85rem;margin-top:20px;color:var(--text-muted);">
+            Already have an account?
+            <a href="#" onclick="switchTab('login'); return false;" style="color:var(--primary);font-weight:700;">Login →</a>
+          </p>
+        </div><!-- /form-register -->
+      </div><!-- /#screen-auth -->
+
+      <!-- ───── SCREEN 2: OTP VERIFICATION ───── -->
+      <div id="screen-otp" style="display:none;text-align:center;">
+        <div style="width:64px;height:64px;background:var(--light-teal);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 20px;">📧</div>
+        <h2 style="font-size:1.5rem;margin-bottom:8px;">Verify your email</h2>
+        <p style="font-size:0.875rem;max-width:320px;margin:0 auto;">We've sent a 6-digit code to <strong id="otp-email-hint" style="color:var(--primary);"></strong>. Enter it below to confirm your account.</p>
+
+        <div class="otp-inputs" id="otp-inputs">
+          <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+          <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+          <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+          <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+          <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+          <input class="otp-digit" type="text" maxlength="1" inputmode="numeric" pattern="[0-9]"/>
+        </div>
+        <div class="auth-alert" id="otp-alert" role="alert" style="text-align:left;"></div>
+
+        <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:8px;" id="btn-verify-otp">
+          <div class="spinner"></div>
+          <span class="btn-text">Verify &amp; Activate Account</span>
+        </button>
+
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-top:16px;">
+          Didn't receive the code?
+          <a href="#" id="resend-otp-link" onclick="resendOtp(); return false;" style="color:var(--primary);font-weight:600;">Resend code</a>
+          <span id="resend-timer" style="color:var(--text-muted);"></span>
+        </p>
+        <!-- Demo hint: show the OTP returned from the backend dev mode -->
+        <div id="dev-otp-hint" style="display:none;margin-top:14px;padding:10px 14px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:var(--radius);font-size:0.8rem;color:#78350F;text-align:left;">
+          <strong>Developer mode:</strong> Your OTP is <strong id="dev-otp-code" style="letter-spacing:0.1em;"></strong>
+          <br><em>Remove this hint before going live.</em>
+        </div>
+      </div><!-- /#screen-otp -->
+
+      <!-- ───── SCREEN 3: FORGOT PASSWORD ───── -->
+      <div id="screen-forgot" style="display:none;">
+        <button onclick="showScreen('auth')" style="background:none;border:none;font-size:0.82rem;color:var(--text-muted);display:flex;align-items:center;gap:4px;margin-bottom:24px;cursor:pointer;padding:0;">← Back to login</button>
+        <div style="width:56px;height:56px;background:var(--light-teal);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:18px;">🔐</div>
+        <h2 style="font-size:1.5rem;margin-bottom:8px;">Reset your password</h2>
+        <p style="font-size:0.875rem;margin-bottom:24px;">Enter the email address on your account and we'll send you a reset link.</p>
+        <div class="auth-alert" id="forgot-alert" role="alert"></div>
+        <div class="form-group">
+          <label for="forgot-email">Email Address</label>
+          <input type="email" id="forgot-email" class="form-control" placeholder="yourname@example.com"/>
+        </div>
+        <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;" id="btn-forgot">
+          <div class="spinner"></div>
+          <span class="btn-text">Send reset link</span>
+        </button>
+      </div><!-- /#screen-forgot -->
+
+      <!-- ───── SCREEN 4: SUCCESS ───── -->
+      <div id="screen-success" style="display:none;text-align:center;padding:20px 0;">
+        <div style="width:72px;height:72px;background:#D1FAE5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 20px;border:2px solid #A7F3D0;">✅</div>
+        <h2 style="font-size:1.5rem;margin-bottom:8px;">You're in!</h2>
+        <p style="font-size:0.9rem;margin-bottom:28px;">Your account is verified and active. Redirecting you to your dashboard…</p>
+        <div class="progress-bar" style="margin:0 auto 8px;max-width:200px;">
+          <div class="progress-fill" id="redirect-bar" style="width:0%;transition:width 3s linear;"></div>
+        </div>
+        <p style="font-size:0.8rem;color:var(--text-muted);">Redirecting in 3 seconds…</p>
+        <a href="dashboard.html" class="btn btn-primary mt-24" style="display:inline-flex;">Go to Dashboard now →</a>
+      </div>
+
+    </div><!-- /.auth-form-inner -->
+  </div><!-- /.auth-form-panel -->
+</div><!-- /.auth-page -->
+
+<script src="config.js"></script>
+<script src="main.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════
+  HomoDentHealth — Auth Page Logic
+  Talks to the real backend: POST /api/auth/register|login|verify-otp|resend-otp|forgot-password
+   ═══════════════════════════════════════════════════════ */
+
+let pendingUserId = null;
+let resendCooldown = null;
+
+/* ── Screen management ──────────────────────────────── */
+function showScreen(name) {
+  ['auth','otp','forgot','success'].forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (el) el.style.display = s === name ? '' : 'none';
+  });
+}
+
+/* ── Tab switching ──────────────────────────────────── */
+function switchTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('tab-login').classList.toggle('active', isLogin);
+  document.getElementById('tab-register').classList.toggle('active', !isLogin);
+  document.getElementById('form-login').style.display = isLogin ? '' : 'none';
+  document.getElementById('form-register').style.display = isLogin ? 'none' : '';
+  hideAlert('auth-alert');
+}
+document.getElementById('tab-login').addEventListener('click', () => switchTab('login'));
+document.getElementById('tab-register').addEventListener('click', () => switchTab('register'));
+
+/* ── Alert helpers ──────────────────────────────────── */
+function showAlert(id, message, type = 'error') {
+  const el = document.getElementById(id);
+  el.textContent = message;
+  el.className = 'auth-alert show ' + type;
+}
+function hideAlert(id) {
+  const el = document.getElementById(id);
+  el.className = 'auth-alert';
+}
+
+/* ── Password toggle ────────────────────────────────── */
+function togglePw(id, btn) {
+  const input = document.getElementById(id);
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+  else { input.type = 'password'; btn.textContent = '👁️'; }
+}
+
+/* ── Strength meter ─────────────────────────────────── */
+function checkStrength(pw) {
+  const segs = [document.getElementById('seg1'),document.getElementById('seg2'),
+                document.getElementById('seg3'),document.getElementById('seg4')];
+  const label = document.getElementById('strength-label');
+  const tests = [pw.length >= 8, /[A-Z]/.test(pw), /[0-9]/.test(pw), /[^A-Za-z0-9]/.test(pw)];
+  const score = tests.filter(Boolean).length;
+  const colours = ['','#E8523A','#D97706','#4CABA0','#2E9B6B'];
+  const labels  = ['','Weak','Fair','Good','Strong'];
+  segs.forEach((s, i) => { s.style.background = i < score ? colours[score] : 'var(--border)'; });
+  label.style.color = colours[score] || 'var(--text-muted)';
+  label.textContent = pw.length > 0 ? labels[score] : '';
+}
+
+/* ── Gender chips ───────────────────────────────────── */
+document.querySelectorAll('.gender-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.gender-chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+    document.getElementById('reg-gender').value = chip.dataset.val;
+  });
+});
+
+/* ── Validation helpers ─────────────────────────────── */
+function isEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+function clearErr(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'none';
+}
+function setLoading(btnId, on) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.classList.toggle('loading', on);
+  btn.disabled = on;
+}
+
+function goToDashboard() {
+  const user = currentUser();
+  const redirect = new URLSearchParams(location.search).get('redirect');
+  window.location.href = redirect || dashboardUrlForRole(user ? user.role : 'user');
+}
+
+/* ════════════════════════════════════════════
+   LOGIN
+   ════════════════════════════════════════════ */
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  let valid = true;
+
+  clearErr('err-login-email'); clearErr('err-login-password');
+  if (!isEmail(email)) { showErr('err-login-email', 'Please enter a valid email address.'); valid = false; }
+  if (!password)        { showErr('err-login-password', 'Please enter your password.');     valid = false; }
+  if (!valid) return;
+
+  setLoading('btn-login', true); hideAlert('auth-alert');
+
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      // Account exists but hasn't completed email verification yet — send them
+      // straight to the OTP screen instead of just showing a dead-end error.
+      if (data.needsVerification && data.userId) {
+        pendingUserId = data.userId;
+        document.getElementById('otp-email-hint').textContent = email;
+        showScreen('otp');
+        startResendCooldown(60);
+        return;
+      }
+      throw new Error(data.error || 'Login failed. Please try again.');
+    }
+
+    Store.save('access_token', data.accessToken);
+    Store.save('refresh_token', data.refreshToken);
+    Store.save('user', data.user);
+
+    showScreen('success');
+    setTimeout(() => { document.getElementById('redirect-bar').style.width = '100%'; }, 50);
+    setTimeout(goToDashboard, 1600);
+
+  } catch (err) {
+    showAlert('auth-alert', err.message);
+  } finally {
+    setLoading('btn-login', false);
+  }
+});
+
+/* ════════════════════════════════════════════
+   REGISTER
+   ════════════════════════════════════════════ */
+document.getElementById('register-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fullName  = document.getElementById('reg-fullname').value.trim();
+  const email     = document.getElementById('reg-email').value.trim();
+  const phone     = document.getElementById('reg-phone').value.trim();
+  const dob       = document.getElementById('reg-dob').value;
+  const gender    = document.getElementById('reg-gender').value;
+  const password  = document.getElementById('reg-password').value;
+  const confirm   = document.getElementById('reg-confirm').value;
+  let valid = true;
+
+  ['err-reg-name','err-reg-email','err-reg-password','err-reg-confirm'].forEach(clearErr);
+
+  if (!fullName)           { showErr('err-reg-name',     'Please enter your full name.');             valid = false; }
+  if (!isEmail(email))     { showErr('err-reg-email',    'Please enter a valid email address.');      valid = false; }
+  if (password.length < 8) { showErr('err-reg-password', 'Password must be at least 8 characters.'); valid = false; }
+  if (password !== confirm) { showErr('err-reg-confirm', 'Passwords do not match.');                  valid = false; }
+  if (!valid) return;
+
+  setLoading('btn-register', true); hideAlert('auth-alert');
+
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fullName, email, phone: phone || undefined, dateOfBirth: dob || undefined, gender: gender || undefined, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Registration failed. Please try again.');
+
+    // Token is valid immediately but the account is unverified until the OTP
+    // step completes — login is blocked server-side until then.
+    Store.save('access_token', data.accessToken);
+    Store.save('refresh_token', data.refreshToken);
+    Store.save('user', data.user);
+    pendingUserId = data.user._id;
+
+    document.getElementById('otp-email-hint').textContent = email;
+    showScreen('otp');
+    startResendCooldown(60);
+
+    // Dev mode only: the backend echoes the OTP so you can test without SMTP configured.
+    if (data.devOtp) {
+      document.getElementById('dev-otp-hint').style.display = 'block';
+      document.getElementById('dev-otp-code').textContent = data.devOtp;
+    }
+
+  } catch (err) {
+    showAlert('auth-alert', err.message);
+  } finally {
+    setLoading('btn-register', false);
+  }
+});
+
+/* ════════════════════════════════════════════
+   OTP VERIFICATION
+   ════════════════════════════════════════════ */
+
+// OTP digit auto-advance
+document.querySelectorAll('.otp-digit').forEach((input, idx, all) => {
+  input.addEventListener('input', () => {
+    input.value = input.value.replace(/\D/g,'').slice(-1);
+    if (input.value && idx < all.length - 1) all[idx + 1].focus();
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' && !input.value && idx > 0) all[idx - 1].focus();
+  });
+  input.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const digits = (e.clipboardData.getData('text') || '').replace(/\D/g,'').split('');
+    all.forEach((d, i) => { if (digits[i]) { d.value = digits[i]; } });
+    const next = Math.min(digits.length, all.length - 1);
+    all[next].focus();
+  });
+});
+
+document.getElementById('btn-verify-otp').addEventListener('click', async () => {
+  const code = [...document.querySelectorAll('.otp-digit')].map(i => i.value).join('');
+  hideAlert('otp-alert');
+  if (code.length !== 6) { showAlert('otp-alert', 'Please enter the full 6-digit code.'); return; }
+  if (!pendingUserId) { showAlert('otp-alert', 'Session expired. Please register or log in again.'); return; }
+
+  setLoading('btn-verify-otp', true);
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: pendingUserId, otpCode: code }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Invalid code. Please try again.');
+
+    if (data.accessToken) Store.save('access_token', data.accessToken);
+    if (data.refreshToken) Store.save('refresh_token', data.refreshToken);
+    if (data.user) Store.save('user', data.user);
+
+    showScreen('success');
+    setTimeout(() => { document.getElementById('redirect-bar').style.width = '100%'; }, 50);
+    setTimeout(goToDashboard, 1600);
+
+  } catch (err) {
+    showAlert('otp-alert', err.message);
+    document.querySelectorAll('.otp-digit').forEach(i => { i.value = ''; i.style.borderColor = 'var(--accent)'; });
+    document.querySelector('.otp-digit').focus();
+  } finally {
+    setLoading('btn-verify-otp', false);
+  }
+});
+
+async function resendOtp() {
+  if (resendCooldown || !pendingUserId) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/resend-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: pendingUserId }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not resend code.');
+    showAlert('otp-alert', 'A new code has been sent.', 'success');
+    if (data.devOtp) {
+      document.getElementById('dev-otp-hint').style.display = 'block';
+      document.getElementById('dev-otp-code').textContent = data.devOtp;
+    }
+    startResendCooldown(60);
+  } catch (err) {
+    showAlert('otp-alert', err.message);
+  }
+}
+
+function startResendCooldown(seconds) {
+  const link = document.getElementById('resend-otp-link');
+  const timer = document.getElementById('resend-timer');
+  link.style.opacity = '0.4'; link.style.pointerEvents = 'none';
+  let s = seconds;
+  resendCooldown = setInterval(() => {
+    timer.textContent = ` (${s}s)`;
+    s--;
+    if (s < 0) {
+      clearInterval(resendCooldown); resendCooldown = null;
+      link.style.opacity = '1'; link.style.pointerEvents = '';
+      timer.textContent = '';
+    }
+  }, 1000);
+}
+
+/* ════════════════════════════════════════════
+   FORGOT PASSWORD
+   ════════════════════════════════════════════ */
+function showForgot() { showScreen('forgot'); hideAlert('forgot-alert'); }
+
+document.getElementById('btn-forgot').addEventListener('click', async () => {
+  const email = document.getElementById('forgot-email').value.trim();
+  hideAlert('forgot-alert');
+  if (!isEmail(email)) { showAlert('forgot-alert', 'Please enter a valid email address.'); return; }
+
+  setLoading('btn-forgot', true);
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
+    showAlert('forgot-alert', `If ${email} is registered, a reset link has been sent. Check your inbox.`, 'success');
+  } catch (err) {
+    showAlert('forgot-alert', err.message);
+  } finally {
+    setLoading('btn-forgot', false);
+  }
+});
+
+// Auto-redirect if already logged in
+(function checkSession() {
+  if (Store.load('access_token') && currentUser()) {
+    goToDashboard();
+  }
+})();
+</script>
+</body>
+</html>

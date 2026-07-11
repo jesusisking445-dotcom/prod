@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Clinic Admin — HomoDentHealth</title>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  body { background: var(--bg); }
+  .dash-view { display: none; }
+  .dash-view.active { display: block; animation: fadeInUp 0.35s ease; }
+  .sidebar-nav a { cursor: pointer; }
+  .sidebar-user { display: flex; align-items: center; gap: 10px; padding: 14px; background: var(--light-teal); border-radius: var(--radius); margin-bottom: 16px; }
+  .case-item { display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; }
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+  .empty-state .icon { font-size: 2.6rem; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="nav-logo"><img src="images/logo.png" alt="HomoDentHealth" class="nav-logo-img" /></a>
+    <div class="nav-links">
+      <span class="badge badge-teal" style="font-size:0.78rem;">🏥 Clinic Admin</span>
+    </div>
+    <div class="nav-actions">
+      <span id="dash-user-name" style="font-size:0.85rem;color:var(--text-muted);"></span>
+      <a href="#" id="btn-logout" class="btn btn-secondary btn-sm">Logout</a>
+    </div>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </div>
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="#" id="btn-logout-mobile" class="btn btn-secondary btn-sm">Logout</a>
+  </div>
+</nav>
+
+<div class="layout-sidebar">
+  <aside class="sidebar">
+    <div class="sidebar-user">
+      <div class="author-avatar" style="background:var(--primary);color:white;" id="dash-avatar">?</div>
+      <div>
+        <div style="font-weight:700;font-size:0.85rem;" id="dash-fullname">—</div>
+        <div style="font-size:0.75rem;color:var(--text-muted);">Clinic Manager</div>
+      </div>
+    </div>
+    <div class="sidebar-section-label">Manage</div>
+    <nav class="sidebar-nav">
+      <a class="active" data-view="view-appointments">📅 Appointments</a>
+      <a data-view="view-clinic">🏥 Clinic Profile</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+
+    <div class="dash-view active" id="view-appointments">
+      <h2 class="mb-8">Clinic Appointments</h2>
+      <p class="mb-24">All appointments booked at your clinic.</p>
+      <div class="grid-4" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:28px;">
+        <div class="stat-card"><div class="stat-num" id="stat-pending">—</div><div class="stat-label">Pending</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-confirmed">—</div><div class="stat-label">Confirmed</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-completed">—</div><div class="stat-label">Completed</div></div>
+      </div>
+      <div id="appt-list"><p>Loading…</p></div>
+    </div>
+
+    <div class="dash-view" id="view-clinic">
+      <h2 class="mb-24">Clinic Profile</h2>
+      <div class="card" style="max-width:560px;">
+        <form id="clinic-form">
+          <div class="form-group"><label>Clinic Name</label><input type="text" id="cf-name" class="form-control" disabled/></div>
+          <div class="form-group"><label>Description</label><textarea id="cf-description" class="form-control" rows="3"></textarea></div>
+          <div class="form-group"><label>Phone</label><input type="tel" id="cf-phone" class="form-control"/></div>
+          <div class="form-group"><label>Email</label><input type="email" id="cf-email" class="form-control"/></div>
+          <div id="clinic-alert" class="auth-alert" style="margin-bottom:12px;"></div>
+          <button type="submit" class="btn btn-primary" id="btn-save-clinic">Save Changes</button>
+        </form>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="config.js"></script>
+<script src="main.js"></script>
+<script>
+const user = requireAuth(['clinic_manager']);
+
+document.getElementById('btn-logout').addEventListener('click', e => { e.preventDefault(); logout(); });
+document.getElementById('btn-logout-mobile').addEventListener('click', e => { e.preventDefault(); logout(); });
+
+document.querySelectorAll('.sidebar-nav a[data-view]').forEach(link => {
+  link.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar-nav a[data-view]').forEach(a => a.classList.remove('active'));
+    link.classList.add('active');
+    document.querySelectorAll('.dash-view').forEach(v => v.classList.remove('active'));
+    document.getElementById(link.dataset.view).classList.add('active');
+  });
+});
+
+const STATUS_BADGE = { pending: 'badge-moderate', confirmed: 'badge-teal', in_progress: 'badge-teal', completed: 'badge-mild', cancelled: 'badge-severe', no_show: 'badge-severe' };
+function fmtDate(d) { return new Date(d).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }); }
+function patientLabel(a) {
+  if (a.user) return `${a.user.firstName || ''} ${a.user.lastName || ''}`.trim() || a.user.email;
+  return a.contactName || 'Guest patient';
+}
+
+let dentistsCache = [];
+
+async function loadDentists() {
+  try {
+    // Fetch dentists associated with this clinic
+    const res = await apiFetch('/api/admin/users?role=dentist');
+    dentistsCache = res.users || [];
+  } catch (e) { dentistsCache = []; }
+}
+
+// Feature 8: Assign dentist to appointment
+async function assignDentist(apptId, dentistId) {
+  try {
+    await apiFetch(`/api/appointment/${apptId}/assign-dentist`, {
+      method: 'PATCH',
+      body: JSON.stringify({ dentistId: dentistId || null })
+    });
+    showAlert('Dentist assigned successfully.', 'success');
+  } catch (e) {
+    showAlert('Could not assign dentist: ' + (e.message || 'Error'), 'error');
+    // Reload to reset select to last-known value
+    await loadAppointments();
+  }
+}
+
+function showAlert(msg, type) {
+  const el = document.getElementById('appt-alert') || (() => {
+    const d = document.createElement('div'); d.id = 'appt-alert';
+    document.getElementById('appt-list')?.insertAdjacentElement('beforebegin', d);
+    return d;
+  })();
+  el.textContent = msg;
+  el.className = `auth-alert show ${type}`;
+  setTimeout(() => { el.className = 'auth-alert'; }, 3000);
+}
+
+async function loadAppointments() {
+  try {
+    const res = await apiFetch('/api/appointment/clinic/queue');
+    const items = res.appointments || [];
+    document.getElementById('stat-pending').textContent = items.filter(a => a.status === 'pending').length;
+    document.getElementById('stat-confirmed').textContent = items.filter(a => a.status === 'confirmed').length;
+    document.getElementById('stat-completed').textContent = items.filter(a => a.status === 'completed').length;
+
+    const el = document.getElementById('appt-list');
+    if (!items.length) {
+      el.innerHTML = `<div class="empty-state"><div class="icon">📅</div><p>No appointments at your clinic yet.</p></div>`;
+      return;
+    }
+    items.sort((a,b) => new Date(a.appointmentDate) - new Date(b.appointmentDate));
+    // Populate dentist selects for each appointment
+    const dentistOptHtml = `<option value="">— Unassigned —</option>` +
+      dentistsCache.map(d => `<option value="${d._id}">Dr. ${d.firstName} ${d.lastName}</option>`).join('');
+
+    el.innerHTML = items.map(a => `
+      <div class="case-item" style="flex-wrap:wrap;gap:10px;">
+        <div style="flex:1;min-width:200px;">
+          <div style="font-weight:700;">${patientLabel(a)}</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">
+            ${fmtDate(a.appointmentDate)} ${a.timeSlot?.startTime || ''} · ${a.serviceType}
+          </div>
+        </div>
+        <!-- Feature 8: Dentist Assignment -->
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <select class="form-control" style="font-size:.8rem;padding:5px 8px;min-width:160px;"
+            id="dentist-sel-${a._id}"
+            onchange="assignDentist('${a._id}', this.value)">
+            ${dentistOptHtml}
+          </select>
+          <span class="badge ${STATUS_BADGE[a.status] || 'badge-teal'}">${a.status.replace('_',' ')}</span>
+        </div>
+      </div>
+    `).join('');
+
+    // Set current dentist value in each select
+    items.forEach(a => {
+      const sel = document.getElementById(`dentist-sel-${a._id}`);
+      if (sel && a.dentist) sel.value = a.dentist._id || a.dentist;
+    });
+  } catch (e) {
+    document.getElementById('appt-list').innerHTML = `<p>Could not load appointments right now.</p>`;
+  }
+}
+
+async function loadClinic() {
+  try {
+    const res = await apiFetch('/api/clinic/mine');
+    const c = res.clinic;
+    document.getElementById('cf-name').value = c.name || '';
+    document.getElementById('cf-description').value = c.description || '';
+    document.getElementById('cf-phone').value = c.contact?.phone || '';
+    document.getElementById('cf-email').value = c.contact?.email || '';
+  } catch (e) {
+    document.getElementById('clinic-alert').textContent = e.message;
+    document.getElementById('clinic-alert').className = 'auth-alert show error';
+  }
+}
+
+document.getElementById('clinic-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const alertEl = document.getElementById('clinic-alert');
+  const btn = document.getElementById('btn-save-clinic');
+  btn.disabled = true;
+  try {
+    await apiFetch('/api/clinic/mine', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        description: document.getElementById('cf-description').value,
+        contact: {
+          phone: document.getElementById('cf-phone').value,
+          email: document.getElementById('cf-email').value
+        }
+      })
+    });
+    alertEl.textContent = 'Clinic profile updated.';
+    alertEl.className = 'auth-alert show success';
+  } catch (err) {
+    alertEl.textContent = err.message || 'Could not save changes.';
+    alertEl.className = 'auth-alert show error';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+if (user) {
+  document.getElementById('dash-user-name').textContent = user.fullName || user.email;
+  document.getElementById('dash-fullname').textContent = user.fullName || user.email;
+  document.getElementById('dash-avatar').textContent = (user.firstName || user.email || '?')[0].toUpperCase();
+  loadAppointments();
+  loadClinic();
+}
+</script>
+</body>
+</html>
