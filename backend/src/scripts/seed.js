@@ -17,12 +17,24 @@ const seedDatabase = async () => {
     await mongoose.connect(process.env.MONGODB_URI);
     logger.info('Connected to MongoDB');
 
-    await User.deleteMany({});
-    await Clinic.deleteMany({});
-    logger.info('Cleared existing users and clinics');
+    // NOTE: This used to call User.deleteMany({}) / Clinic.deleteMany({})
+    // here, which wiped every real registered user on every single run.
+    // upsertUser() below only creates a demo account if it doesn't
+    // already exist — it never touches other users, so this script is
+    // now safe to run again at any time (e.g. from the Render Shell tab).
+    async function upsertUser(data) {
+      const existing = await User.findOne({ email: data.email });
+      if (existing) {
+        logger.info(`↷ ${data.email} already exists — skipped`);
+        return existing;
+      }
+      const created = await User.create(data);
+      logger.info(`✅ ${data.email} created`);
+      return created;
+    }
 
     // ── 1. SUPER ADMIN ──────────────────────────────────────────────────────
-    const adminUser = await User.create({
+    const adminUser = await upsertUser({
       email:      'admin@homodenthealth.ng',
       password:   'Admin@123456',
       firstName:  'Quadri Ahmmed ',
@@ -31,10 +43,9 @@ const seedDatabase = async () => {
       isVerified: true,
       isActive:   true
     });
-    logger.info('✅ admin@homodenthealth.ng created');
 
     // ── 2. CONTENT ADMIN (blog posts + videos + live chat replies) ──────────
-    const contentAdminUser = await User.create({
+    const contentAdminUser = await upsertUser({
       email:      'content@homodenthealth.ng',
       password:   'Content@123456',
       firstName:  'Adeshina ',
@@ -43,10 +54,9 @@ const seedDatabase = async () => {
       isVerified: true,
       isActive:   true
     });
-    logger.info('✅ content@homodenthealth.ng created');
 
     // ── 3. LIVE CHAT AGENT ─────────────────────────────────────────────────
-    const liveChatAgentUser = await User.create({
+    const liveChatAgentUser = await upsertUser({
       email:      'livechat@homodenthealth.ng',
       password:   'LiveChat@123456',
       firstName:  'Amaka',
@@ -55,10 +65,9 @@ const seedDatabase = async () => {
       isVerified: true,
       isActive:   true
     });
-    logger.info('✅ livechat@homodenthealth.ng created');
 
     // ── 4. DENTIST ──────────────────────────────────────────────────────────
-    const dentistUser = await User.create({
+    const dentistUser = await upsertUser({
       email:      'dentist@homodenthealth.ng',
       password:   'Dentist@123456',
       firstName:  'Dr. John',
@@ -67,10 +76,9 @@ const seedDatabase = async () => {
       isVerified: true,
       isActive:   true
     });
-    logger.info('✅ dentist@homodenthealth.ng created');
 
     // ── 5. CLINIC MANAGER ───────────────────────────────────────────────────
-    const clinicManagerUser = await User.create({
+    const clinicManagerUser = await upsertUser({
       email:      'clinicadmin@homodenthealth.ng',
       password:   'ClinicAdmin@123456',
       firstName:  'Isaac',
@@ -79,10 +87,9 @@ const seedDatabase = async () => {
       isVerified: true,
       isActive:   true
     });
-    logger.info('✅ clinicadmin@homodenthealth.ng created');
 
     // ── 6. PATIENT ──────────────────────────────────────────────────────────
-    const patientUser = await User.create({
+    const patientUser = await upsertUser({
       email:      'patient@homodenthealth.ng',
       password:   'Patient@123456',
       firstName:  'Ajose',
@@ -92,7 +99,6 @@ const seedDatabase = async () => {
       isVerified: true,
       isActive:   true
     });
-    logger.info('✅ patient@homodenthealth.ng created');
 
     // ── CLINICS ─────────────────────────────────────────────────────────────
     const standardServices = [
@@ -168,6 +174,12 @@ const seedDatabase = async () => {
 
     const clinics = [];
     for (const def of clinicDefs) {
+      const existingClinic = await Clinic.findOne({ name: def.name });
+      if (existingClinic) {
+        logger.info(`↷ ${def.name} already exists — skipped`);
+        clinics.push(existingClinic);
+        continue;
+      }
       const { ratingsSeed, ...rest } = def;
       const clinic = await Clinic.create({
         ...rest,

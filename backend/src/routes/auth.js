@@ -10,7 +10,14 @@ const logger = require('../utils/logger');
 
 const router = express.Router();
 
-const isProd = () => process.env.NODE_ENV === 'production';
+// Set SHOW_DEV_OTP=true in your environment to have the OTP code echoed
+// back in the register/resend-otp API response, so the frontend's
+// dev-otp-hint box can display it — useful while testing without SMTP
+// fully working yet. Turn this OFF (remove the var or set to false)
+// once email delivery is confirmed, since leaving it on lets anyone who
+// can call these endpoints see the code without checking the inbox —
+// that defeats the point of email verification.
+const showDevOtp = () => process.env.SHOW_DEV_OTP === 'true';
 
 // ── REGISTER ──────────────────────────────────────────────
 // Creates the account, sends a 6-digit OTP by email, and returns
@@ -66,8 +73,8 @@ router.post('/register', rateLimiter.auth, asyncHandler(async (req, res) => {
     accessToken: tokens.accessToken,
     refreshToken: tokens.refreshToken,
     user: user.toJSON(),
-    // Only exposed outside production, so you can test the flow without configuring SMTP.
-    devOtp: isProd() ? undefined : otp
+    // Only included when SHOW_DEV_OTP=true — see note near isProd/showDevOtp above.
+    devOtp: showDevOtp() ? otp : undefined
   });
 }));
 
@@ -137,7 +144,7 @@ router.post('/resend-otp', rateLimiter.auth, asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: 'A new code has been sent.',
-    devOtp: isProd() ? undefined : otp
+    devOtp: showDevOtp() ? otp : undefined
   });
 }));
 
