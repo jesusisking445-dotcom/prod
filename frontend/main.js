@@ -47,7 +47,9 @@ const Store = {
 };
 
 // ── API helper ────────────────────────────────────
-const API_BASE = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 'http://localhost:4000';
+const API_BASE =
+(window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL)
+|| "https://prod-1-ztou.onrender.com/api";
 
 async function apiFetch(path, options = {}) {
   const token = Store.load('access_token');

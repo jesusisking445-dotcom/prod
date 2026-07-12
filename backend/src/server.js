@@ -39,7 +39,7 @@ const server = http.createServer(app);
 // e.g. CORS_ORIGIN=http://localhost:5500,https://your-frontend.onrender.com
 const corsOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
-  : ['http://localhost:5500', 'http://127.0.0.1:5500'];
+  : ['http://localhost:5500', 'http://127.0.0.1:5500', 'https://prod-1-ztou.onrender.com'];
 
 const io = new Server(server, {
   cors: {
