@@ -58,14 +58,16 @@ app.use(compression());
 app.use(mongoSanitize());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+// Applied to EVERY request (not just preflight OPTIONS) so the
+// Access-Control-Allow-Origin header actually reaches real GET/POST/etc
+// responses. cors() also auto-handles OPTIONS preflight for us.
 const corsOptions = {
   origin: corsOrigins,
   methods: ['GET','POST','PATCH','PUT','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization'],
   credentials: true
 };
-
-app.use(cors(corsOptions)); // handles preflight AND real requests
+app.use(cors(corsOptions));
 app.use(rateLimiter.global);
 
 // ── Health ────────────────────────────────────────────────────
