@@ -174,7 +174,7 @@ Logs written to `/logs/`:
 ### Assessment
 - Patient demographics, symptoms selected
 - Triage result (level, condition, action, home care)
-- Session tracking, expiry after 90 days
+- Session tracking, expiry after 90 days  passcode for mongodb v6jkLUTXExRXghuZ
 
 ### Appointment
 - User, clinic, dentist assignment
