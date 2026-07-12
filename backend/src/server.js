@@ -39,7 +39,7 @@ const server = http.createServer(app);
 // e.g. CORS_ORIGIN=http://localhost:5500,https://your-frontend.onrender.com
 const corsOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
-  : ['http://localhost:5500', 'http://127.0.0.1:5500', 'https://prod-1-ztou.onrender.com'];
+  : ['http://localhost:5500', 'http://127.0.0.1:5500', 'https://homodenthealth.netlify.app'];
 
 const io = new Server(server, {
   cors: {
@@ -58,12 +58,14 @@ app.use(compression());
 app.use(mongoSanitize());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
-app.use(cors({
+const corsOptions = {
   origin: corsOrigins,
-  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET','POST','PATCH','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions)); // handles preflight AND real requests
 app.use(rateLimiter.global);
 
 // ── Health ────────────────────────────────────────────────────
