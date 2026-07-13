@@ -71,6 +71,11 @@
           <div class="form-group"><label>Description</label><textarea id="cf-description" class="form-control" rows="3"></textarea></div>
           <div class="form-group"><label>Phone</label><input type="tel" id="cf-phone" class="form-control"/></div>
           <div class="form-group"><label>Email</label><input type="email" id="cf-email" class="form-control"/></div>
+          <div class="form-group">
+            <label>Business Hours</label>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin:2px 0 8px;">Uncheck a day to mark the clinic closed. This controls which days patients can book on the appointment calendar.</p>
+            <div id="hours-editor" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+          </div>
           <div id="clinic-alert" class="auth-alert" style="margin-bottom:12px;"></div>
           <button type="submit" class="btn btn-primary" id="btn-save-clinic">Save Changes</button>
         </form>
@@ -188,6 +193,52 @@ async function loadAppointments() {
   }
 }
 
+/* Business Hours editor — talks to PATCH /api/clinic/mine, which already
+   accepts an `hours` object (see routes/clinic.js). This is the only piece
+   that was missing: a form that actually sends it. */
+const DAY_ORDER  = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+const DAY_LABELS = { monday:'Monday', tuesday:'Tuesday', wednesday:'Wednesday', thursday:'Thursday', friday:'Friday', saturday:'Saturday', sunday:'Sunday' };
+
+function renderHoursEditor(hours) {
+  const hasData = hours && Object.keys(hours).some(k => hours[k] && (hours[k].open || hours[k].open === null));
+  const wrap = document.getElementById('hours-editor');
+  wrap.innerHTML = DAY_ORDER.map(day => {
+    const h = hasData ? hours[day] : null;
+    const isWeekend = day === 'saturday' || day === 'sunday';
+    // Sensible default (Mon–Fri open, weekend closed) only when this clinic has no hours saved yet.
+    const isOpen   = hasData ? !!(h && h.open) : !isWeekend;
+    const openVal  = (h && h.open)  || '08:00';
+    const closeVal = (h && h.close) || '17:00';
+    return `
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid var(--border);">
+        <label style="display:flex;align-items:center;gap:6px;min-width:130px;font-size:0.85rem;font-weight:600;">
+          <input type="checkbox" id="hrs-open-${day}" ${isOpen ? 'checked' : ''} onchange="toggleDayInputs('${day}')" style="width:16px;height:16px;accent-color:var(--primary);"/>
+          ${DAY_LABELS[day]}
+        </label>
+        <input type="time" id="hrs-start-${day}" class="form-control" style="width:auto;" value="${openVal}" ${isOpen ? '' : 'disabled'}/>
+        <span style="font-size:0.8rem;color:var(--text-muted);">to</span>
+        <input type="time" id="hrs-end-${day}" class="form-control" style="width:auto;" value="${closeVal}" ${isOpen ? '' : 'disabled'}/>
+      </div>`;
+  }).join('');
+}
+
+function toggleDayInputs(day) {
+  const isOpen = document.getElementById(`hrs-open-${day}`).checked;
+  document.getElementById(`hrs-start-${day}`).disabled = !isOpen;
+  document.getElementById(`hrs-end-${day}`).disabled = !isOpen;
+}
+
+function collectHoursFromForm() {
+  const hours = {};
+  DAY_ORDER.forEach(day => {
+    const isOpen = document.getElementById(`hrs-open-${day}`).checked;
+    hours[day] = isOpen
+      ? { open: document.getElementById(`hrs-start-${day}`).value, close: document.getElementById(`hrs-end-${day}`).value }
+      : { open: null, close: null };
+  });
+  return hours;
+}
+
 async function loadClinic() {
   try {
     const res = await apiFetch('/api/clinic/mine');
@@ -196,6 +247,7 @@ async function loadClinic() {
     document.getElementById('cf-description').value = c.description || '';
     document.getElementById('cf-phone').value = c.contact?.phone || '';
     document.getElementById('cf-email').value = c.contact?.email || '';
+    renderHoursEditor(c.hours);
   } catch (e) {
     document.getElementById('clinic-alert').textContent = e.message;
     document.getElementById('clinic-alert').className = 'auth-alert show error';
@@ -215,7 +267,8 @@ document.getElementById('clinic-form').addEventListener('submit', async e => {
         contact: {
           phone: document.getElementById('cf-phone').value,
           email: document.getElementById('cf-email').value
-        }
+        },
+        hours: collectHoursFromForm()
       })
     });
     alertEl.textContent = 'Clinic profile updated.';
@@ -232,6 +285,7 @@ if (user) {
   document.getElementById('dash-user-name').textContent = user.fullName || user.email;
   document.getElementById('dash-fullname').textContent = user.fullName || user.email;
   document.getElementById('dash-avatar').textContent = (user.firstName || user.email || '?')[0].toUpperCase();
+  renderHoursEditor(null);
   loadAppointments();
   loadClinic();
 }

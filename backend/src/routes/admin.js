@@ -171,7 +171,7 @@ router.get('/clinics', asyncHandler(async (req, res) => {
 }));
 
 router.post('/clinics', asyncHandler(async (req, res) => {
-  const { name, location, contact, services, specialties, manager } = req.body;
+  const { name, location, contact, services, specialties, manager, hours } = req.body;
 
   const clinic = new Clinic({
     name,
@@ -180,6 +180,7 @@ router.post('/clinics', asyncHandler(async (req, res) => {
     services,
     specialties,
     manager,
+    hours,
     status: 'active'
   });
 
